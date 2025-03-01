@@ -447,10 +447,9 @@ function getParameterByName(name, url = window.location.href) {
 }
 
 async function fetchProducts() {
-    // Получаем SPREADSHEET_ID из URL-параметра
+    // Получаем SPREADSHEET_ID из URL-параметра или используем значение по умолчанию
     const SPREADSHEET_ID = getParameterByName('id');
     
-    // Проверяем, есть ли кэшированные данные
     const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
     if (cachedProducts) {
         allProducts = JSON.parse(cachedProducts);
@@ -458,59 +457,27 @@ async function fetchProducts() {
         return;
     }
 
-    // Сначала нужно получить список всех листов
-    const sheetsUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
+    // Используем gviz вместо API
+    const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
     
     try {
-        // Получаем список листов
-        const sheetsResponse = await fetch(sheetsUrl);
-        const sheetsTextData = await sheetsResponse.text();
+        const response = await fetch(gvizUrl);
+        const textData = await response.text();
         
         // Очищаем ответ от префикса и постфикса
-        const sheetsJsonString = sheetsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-        const sheetsData = JSON.parse(sheetsJsonString);
+        const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const data = JSON.parse(jsonString);
         
-        // Получаем названия всех листов
-        const sheets = sheetsData.table.cols.map(col => col.label || '');
+        // Преобразование данных из формата gviz в массив массивов
+        const rows = data.table.rows;
+        const formattedProducts = rows.map(row => {
+            return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+        });
         
-        // Фильтруем только те листы, которые начинаются с "goods"
-        const goodsSheets = sheets.filter(sheet => sheet.startsWith('goods'));
-        
-        // Если нет листов goods, выходим
-        if (goodsSheets.length === 0) {
-            console.error("Не найдены листы, начинающиеся с 'goods'");
-            return;
-        }
-        
-        // Массив для хранения всех продуктов
-        let allGoodsProducts = [];
-        
-        // Для каждого листа goods получаем данные
-        for (const sheet of goodsSheets) {
-            const RANGE = `${sheet}!A2:E`; // Диапазон данных A2:E
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheet)}&range=${encodeURIComponent('A2:E')}`;
-            
-            const response = await fetch(gvizUrl);
-            const textData = await response.text();
-            
-            // Очищаем ответ от префикса и постфикса
-            const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-            const data = JSON.parse(jsonString);
-            
-            // Преобразование данных из формата gviz в массив массивов
-            const rows = data.table.rows;
-            const formattedProducts = rows.map(row => {
-                return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-            });
-            
-            // Добавляем продукты из текущего листа к общему массиву
-            allGoodsProducts = [...allGoodsProducts, ...formattedProducts];
-        }
-        
-        console.log(`Загружено всего ${allGoodsProducts.length} товаров с ${goodsSheets.length} листов`);
-        allProducts = allGoodsProducts; // Запись данных в allProducts
-        localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(allGoodsProducts));
-        renderProducts(allGoodsProducts);
+        console.log(formattedProducts); // Проверим, что возвращаются значения
+        allProducts = formattedProducts; // Запись данных в allProducts
+        localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(formattedProducts));
+        renderProducts(formattedProducts);
     } catch (error) {
         console.error("Ошибка при загрузке данных:", error);
     }
