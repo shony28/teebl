@@ -446,42 +446,62 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+
 async function fetchProducts() {
-    // Получаем SPREADSHEET_ID из URL-параметра или используем значение по умолчанию
+    // Получаем SPREADSHEET_ID из URL-параметра
     const SPREADSHEET_ID = getParameterByName('id');
     
-    /*const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
-    if (cachedProducts) {
-        allProducts = JSON.parse(cachedProducts);
-        renderProducts(allProducts);
-        return;
-    }*/
-
-    // Используем gviz вместо API
-    const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
-    
     try {
-        const response = await fetch(gvizUrl);
-        const textData = await response.text();
+        // Сначала получим список всех листов в таблице
+        const sheetsUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json`;
+        const sheetsResponse = await fetch(sheetsUrl);
+        const sheetsTextData = await sheetsResponse.text();
         
         // Очищаем ответ от префикса и постфикса
-        const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-        const data = JSON.parse(jsonString);
+        const sheetsJsonString = sheetsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const sheetsData = JSON.parse(sheetsJsonString);
         
-        // Преобразование данных из формата gviz в массив массивов
-        const rows = data.table.rows;
-        const formattedProducts = rows.map(row => {
-            return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-        });
+        // Получаем список листов
+        const sheets = sheetsData.table.rows.map(row => row.c[0].v);
         
-        console.log(formattedProducts); // Проверим, что возвращаются значения
-        allProducts = formattedProducts; // Запись данных в allProducts
-        localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(formattedProducts));
-        renderProducts(formattedProducts);
+        // Фильтруем листы, названия которых начинаются с "goods"
+        const goodsSheets = sheets.filter(sheet => sheet.startsWith('goods'));
+        
+        // Массив для хранения всех товаров
+        allProducts = [];
+        
+        // Проходим по каждому листу и получаем данные
+        for (const sheet of goodsSheets) {
+            // Используем gviz для получения данных с текущего листа
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheet}&range=A2:E`;
+            
+            const response = await fetch(gvizUrl);
+            const textData = await response.text();
+            
+            // Очищаем ответ от префикса и постфикса
+            const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+            const data = JSON.parse(jsonString);
+            
+            // Преобразование данных из формата gviz в массив массивов
+            const rows = data.table.rows;
+            const formattedProducts = rows.map(row => {
+                return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+            });
+            
+            // Добавляем товары из текущего листа в общий массив
+            allProducts = allProducts.concat(formattedProducts);
+        }
+        
+        console.log(`Загружено ${allProducts.length} товаров из ${goodsSheets.length} листов`);
+        
+        // Сохраняем все товары в localStorage и отображаем их
+        localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(allProducts));
+        renderProducts(allProducts);
     } catch (error) {
         console.error("Ошибка при загрузке данных:", error);
     }
 }
+
 
 function renderProducts(products) {
     if (!products || !Array.isArray(products)) {
