@@ -448,7 +448,7 @@ function getParameterByName(name, url = window.location.href) {
 
 async function fetchProducts() {
     // Получаем SPREADSHEET_ID из URL-параметра или используем значение по умолчанию
-    const SPREADSHEET_ID = getParameterByName('spreadsheet') || '1JpFTFvgDfpTyqwggXIefz3pvY1gB59Jv-pZk1YjFzFk';
+    const SPREADSHEET_ID = getParameterByName('spreadsheet');
     
     const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
     if (cachedProducts) {
