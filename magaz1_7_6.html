@@ -450,12 +450,12 @@ async function fetchProducts() {
     // Получаем SPREADSHEET_ID из URL-параметра или используем значение по умолчанию
     const SPREADSHEET_ID = getParameterByName('id');
     
-    const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
+    /*const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
     if (cachedProducts) {
         allProducts = JSON.parse(cachedProducts);
         renderProducts(allProducts);
         return;
-    }
+    }*/
 
     // Используем gviz вместо API
     const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
