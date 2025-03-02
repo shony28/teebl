@@ -446,113 +446,42 @@ function getParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
-
 async function fetchProducts() {
-    // Получаем SPREADSHEET_ID из URL-параметра
+    // Получаем SPREADSHEET_ID из URL-параметра или используем значение по умолчанию
     const SPREADSHEET_ID = getParameterByName('id');
     
-    if (!SPREADSHEET_ID) {
-        console.error("ID таблицы не указан в URL");
+    /*const cachedProducts = localStorage.getItem(`products_${SPREADSHEET_ID}`);
+    if (cachedProducts) {
+        allProducts = JSON.parse(cachedProducts);
+        renderProducts(allProducts);
         return;
-    }
+    }*/
+
+    // Используем gviz вместо API
+    const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
     
     try {
-        allProducts = [];
+        const response = await fetch(gvizUrl);
+        const textData = await response.text();
         
-        // Вместо получения списка листов, используем более надежный подход
-        // Делаем запрос к известному листу goods для начала
-        let sheetIndex = 1;
-        let hasMoreSheets = true;
+        // Очищаем ответ от префикса и постфикса
+        const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const data = JSON.parse(jsonString);
         
-        while (hasMoreSheets) {
-            const sheetName = `goods${sheetIndex > 1 ? sheetIndex : ''}`;
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${sheetName}&range=A2:E`;
-            
-            try {
-                const response = await fetch(gvizUrl);
-                const textData = await response.text();
-                
-                // Если получили пустой ответ или ошибку, прекращаем поиск листов
-                if (textData.includes('Invalid query') || textData.includes('no such sheet')) {
-                    hasMoreSheets = false;
-                    continue;
-                }
-                
-                // Очищаем ответ от префикса и постфикса
-                const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-                const data = JSON.parse(jsonString);
-                
-                // Проверяем, что есть строки данных
-                if (data && data.table && data.table.rows && data.table.rows.length > 0) {
-                    // Преобразование данных из формата gviz в массив массивов
-                    const rows = data.table.rows;
-                    const formattedProducts = rows.map(row => {
-                        if (!row.c) return null;
-                        return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-                    }).filter(item => item !== null);
-                    
-                    // Добавляем товары из текущего листа в общий массив
-                    if (formattedProducts.length > 0) {
-                        console.log(`Загружено ${formattedProducts.length} товаров из листа ${sheetName}`);
-                        allProducts = allProducts.concat(formattedProducts);
-                    }
-                }
-                
-                // Переходим к следующему листу
-                sheetIndex++;
-                
-                // Если проверили 10 листов и не нашли больше, прекращаем поиск
-                if (sheetIndex > 10) {
-                    hasMoreSheets = false;
-                }
-                
-            } catch (error) {
-                console.error(`Ошибка при загрузке листа ${sheetName}:`, error);
-                hasMoreSheets = false;
-            }
-        }
+        // Преобразование данных из формата gviz в массив массивов
+        const rows = data.table.rows;
+        const formattedProducts = rows.map(row => {
+            return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+        });
         
-        console.log(`Всего загружено ${allProducts.length} товаров`);
-        
-        // Проверяем, что были загружены товары
-        if (allProducts.length === 0) {
-            console.error("Не удалось загрузить товары. Проверьте ID таблицы и наличие листов, начинающихся с 'goods'");
-            // Попробуем загрузить с оригинального диапазона
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
-            const response = await fetch(gvizUrl);
-            const textData = await response.text();
-            const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-            const data = JSON.parse(jsonString);
-            
-            // Преобразование данных из формата gviz в массив массивов
-            if (data && data.table && data.table.rows) {
-                const rows = data.table.rows;
-                const formattedProducts = rows.map(row => {
-                    if (!row.c) return null;
-                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-                }).filter(item => item !== null);
-                
-                if (formattedProducts.length > 0) {
-                    console.log(`Загружено ${formattedProducts.length} товаров из оригинального диапазона`);
-                    allProducts = formattedProducts;
-                }
-            }
-        }
-        
-        // Сохраняем все товары в localStorage и отображаем их
-        if (allProducts.length > 0) {
-            localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(allProducts));
-            renderProducts(allProducts);
-        } else {
-            console.error("Не удалось загрузить товары");
-            document.getElementById('products').innerHTML = '<p class="error">Не удалось загрузить товары. Пожалуйста, проверьте подключение к интернету и ID таблицы.</p>';
-        }
+        console.log(formattedProducts); // Проверим, что возвращаются значения
+        allProducts = formattedProducts; // Запись данных в allProducts
+        localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(formattedProducts));
+        renderProducts(formattedProducts);
     } catch (error) {
         console.error("Ошибка при загрузке данных:", error);
-        document.getElementById('products').innerHTML = '<p class="error">Произошла ошибка при загрузке товаров.</p>';
     }
 }
-
 
 function renderProducts(products) {
     if (!products || !Array.isArray(products)) {
