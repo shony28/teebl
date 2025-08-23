@@ -332,79 +332,7 @@
             color: #007bff;
         }
 
-        /* Медиа-запросы для адаптивности */
-        @media (max-width: 768px) {
-            .header-top {
-                padding: 10px 15px;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-
-            .header-top__logo2 {
-                max-height: 70px;
-            }
-
-            .header-top__search-field {
-                order: 3;
-                width: 100%;
-                max-width: none;
-                margin-top: 10px;
-                padding: 12px;
-                height: 48px;
-            }
-
-            .header-top__navigation {
-                display: none;
-            }
-
-            .burger-menu {
-                display: flex;
-                order: 2;
-            }
-
-            .header-top__icons {
-                gap: 15px;
-            }
-
-            .mobile-nav-overlay.active {
-                display: block;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .header-top {
-                padding: 8px 10px;
-            }
-
-            .header-top__icons {
-                gap: 10px;
-            }
-
-            .header-top__icon-32-px-cart,
-            .header-top__icon-32-px-favorites,
-            .header-top__icon-32-px-user {
-                width: 28px;
-                height: 28px;
-            }
-            .product {
-                margin: 4px;
-                padding: 5px;
-                width: 44%;
-            }
-            .product .quantity-and-button button {
-                padding: 10px 2px;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .header-top {
-                padding: 16px 160px;
-            }
-
-            .header-top__search-field {
-                width: 372px;
-            }
-        }
+        
 
         #cart {
             position: fixed;
@@ -626,6 +554,81 @@
         .product .quantity-and-button button:hover {
             background-color: #0056b3;
         }
+
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 768px) {
+            .header-top {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .header-top__logo2 {
+                max-height: 70px;
+            }
+
+            .header-top__search-field {
+                order: 3;
+                width: 100%;
+                max-width: none;
+                margin-top: 10px;
+                padding: 12px;
+                height: 48px;
+            }
+
+            .header-top__navigation {
+                display: none;
+            }
+
+            .burger-menu {
+                display: flex;
+                order: 2;
+            }
+
+            .header-top__icons {
+                gap: 15px;
+            }
+
+            .mobile-nav-overlay.active {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-top {
+                padding: 8px 10px;
+            }
+
+            .header-top__icons {
+                gap: 10px;
+            }
+
+            .header-top__icon-32-px-cart,
+            .header-top__icon-32-px-favorites,
+            .header-top__icon-32-px-user {
+                width: 28px;
+                height: 28px;
+            }
+            .product {
+                margin: 4px;
+                padding: 5px;
+                width: 44%;
+            }
+            .product .quantity-and-button button {
+                padding: 10px 2px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .header-top {
+                padding: 16px 160px;
+            }
+
+            .header-top__search-field {
+                width: 372px;
+            }
+        }
+        
     </style>
 </head>
 <body>
