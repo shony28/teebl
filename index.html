@@ -811,7 +811,7 @@
             const searchTerm = document.getElementById('search').value.toLowerCase();
             const filteredProducts = allProducts.filter(product => product[1].toLowerCase().includes(searchTerm));
             renderProducts(filteredProducts);
-            toggleResetButton();
+            
         }
 
         function resetSearch() {
@@ -1013,10 +1013,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             fetchProducts();
             loadCart();
-            document.getElementById('search').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    filterProducts();
-                }
+            document.getElementById('search').addEventListener('input', function(e) {
+                filterProducts();
             });
             
             // Закрытие мобильного меню при клике вне его
