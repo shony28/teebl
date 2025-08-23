@@ -45,6 +45,12 @@
         .product h2 {
             font-size: 1.2em;
             margin: 10px 0;
+            height: 60px; /* Фиксированная высота для 2 строк */
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* Ограничиваем до 2 строк */
+            -webkit-box-orient: vertical;
+            line-height: 1.4em; /* 60px / 2 строки = 30px на строку */
         }
 
         .product p.description {
