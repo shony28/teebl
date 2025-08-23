@@ -82,7 +82,7 @@
             border-style: solid;
             border-color: #b5b5b5;
             border-width: 0px 0px 1px 0px;
-            padding: 16px 160px 16px 160px;
+            padding: 16px 20px;
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -113,6 +113,7 @@
             height: auto;
             position: relative;
             overflow: visible;
+            max-height: 50px;
         }
 
         .header-top__search-field {
@@ -125,7 +126,8 @@
             align-items: center;
             justify-content: flex-start;
             flex-shrink: 0;
-            width: 372px;
+            width: 100%;
+            max-width: 300px;
             height: 56px;
             position: relative;
         }
@@ -147,6 +149,7 @@
             font-weight: 500;
             opacity: 0.5;
             position: relative;
+            width: 100%;
         }
 
         .header-top__search input[type="text"] {
@@ -162,6 +165,35 @@
         .header-top__search input[type="text"]::placeholder {
             color: #656565;
             opacity: 0.5;
+        }
+
+        /* Бургер меню стили */
+        .burger-menu {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 5px;
+            z-index: 1001;
+        }
+
+        .burger-line {
+            width: 25px;
+            height: 3px;
+            background-color: #000;
+            margin: 3px 0;
+            transition: 0.3s;
+        }
+
+        .burger-menu.active .burger-line:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .burger-menu.active .burger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .burger-menu.active .burger-line:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
         }
 
         .header-top__navigation {
@@ -185,6 +217,7 @@
             font-weight: 500;
             position: relative;
             cursor: pointer;
+            transition: opacity 0.3s;
         }
 
         .header-top__home {
@@ -195,6 +228,12 @@
         .header-top__contact-us,
         .header-top__blog {
             opacity: 0.3;
+        }
+
+        .header-top__about:hover,
+        .header-top__contact-us:hover,
+        .header-top__blog:hover {
+            opacity: 0.7;
         }
 
         .header-top__icons {
@@ -246,6 +285,117 @@
             position: absolute;
             top: -5px;
             right: -5px;
+        }
+
+        /* Мобильная навигация */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .mobile-nav {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 250px;
+            height: 100%;
+            background-color: white;
+            z-index: 1000;
+            transition: right 0.3s ease;
+            padding: 80px 20px 20px;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-nav.active {
+            right: 0;
+        }
+
+        .mobile-nav-item {
+            display: block;
+            padding: 15px 0;
+            color: #000;
+            text-decoration: none;
+            font-family: "Inter-Medium", sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .mobile-nav-item:hover {
+            color: #007bff;
+        }
+
+        /* Медиа-запросы для адаптивности */
+        @media (max-width: 768px) {
+            .header-top {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .header-top__logo2 {
+                max-height: 40px;
+            }
+
+            .header-top__search-field {
+                order: 3;
+                width: 100%;
+                max-width: none;
+                margin-top: 10px;
+                padding: 12px;
+                height: 48px;
+            }
+
+            .header-top__navigation {
+                display: none;
+            }
+
+            .burger-menu {
+                display: flex;
+                order: 2;
+            }
+
+            .header-top__icons {
+                gap: 15px;
+            }
+
+            .mobile-nav-overlay.active {
+                display: block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-top {
+                padding: 8px 10px;
+            }
+
+            .header-top__icons {
+                gap: 10px;
+            }
+
+            .header-top__icon-32-px-cart,
+            .header-top__icon-32-px-favorites,
+            .header-top__icon-32-px-user {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .header-top {
+                padding: 16px 160px;
+            }
+
+            .header-top__search-field {
+                width: 372px;
+            }
         }
 
         #cart {
@@ -475,6 +625,29 @@
         <div class="header-top__logo">
             <img class="header-top__logo2" src="logo.png" alt="Logo" />
         </div>
+        
+        <!-- Бургер меню кнопка -->
+        <div class="burger-menu" onclick="toggleMobileNav()">
+            <div class="burger-line"></div>
+            <div class="burger-line"></div>
+            <div class="burger-line"></div>
+        </div>
+        
+        <!-- Обычная навигация для десктопа -->
+        <div class="header-top__navigation">
+            <div class="header-top__home">Home</div>
+            <div class="header-top__about">About</div>
+            <div class="header-top__contact-us">Contact Us</div>
+        </div>
+        
+        <div class="header-top__icons">
+            <div class="header-top__icon-32-px-cart" onclick="toggleCart()">
+                <img class="header-top__cart-1" src="cart-10.svg" alt="Cart" />
+                <div id="cart-count">0</div>
+            </div>
+        </div>
+        
+        <!-- Поиск на мобильных будет под основным контентом -->
         <div class="header-top__search-field">
             <img class="header-top__icon-32-px-search" src="icon-32-px-search0.svg" alt="Search Icon" />
             <div class="header-top__search">
@@ -482,21 +655,16 @@
                 <span id="reset-btn" onclick="resetSearch()" style="display: none;">×</span>
             </div>
         </div>
-        <div class="header-top__navigation">
-            <div class="header-top__home">Home</div>
-            <div class="header-top__about">About</div>
-            <div class="header-top__contact-us">Contact Us</div>
-       
-        </div>
-        <div class="header-top__icons">
-            
-            <div class="header-top__icon-32-px-cart" onclick="toggleCart()">
-                <img class="header-top__cart-1" src="cart-10.svg" alt="Cart" />
-                <div id="cart-count">0</div>
-            </div>
-            
-        </div>
     </div>
+
+    <!-- Мобильная навигация -->
+    <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+    <div class="mobile-nav" id="mobile-nav">
+        <div class="mobile-nav-item" onclick="closeMobileNav()">Home</div>
+        <div class="mobile-nav-item" onclick="closeMobileNav()">About</div>
+        <div class="mobile-nav-item" onclick="closeMobileNav()">Contact Us</div>
+    </div>
+
     <div id="products"></div>
     <div id="cart">
         <div class="cart-header">
@@ -538,6 +706,7 @@
         const TELEGRAM_CHAT_ID = '459773195';
         let cart = [];
         let isCartVisible = false;
+        let isMobileNavVisible = false;
         let allProducts = [];
 
         function getParameterByName(name, url = window.location.href) {
@@ -563,7 +732,6 @@
                     return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
                 });
                 allProducts = formattedProducts;
-                localStorage.setItem(`products_${SPREADSHEET_ID}`, JSON.stringify(formattedProducts));
                 renderProducts(formattedProducts);
             } catch (error) {
                 console.error("Ошибка при загрузке данных:", error);
@@ -617,6 +785,35 @@
             } else {
                 resetButton.style.display = 'none';
             }
+        }
+
+        // Функции для мобильного меню
+        function toggleMobileNav() {
+            isMobileNavVisible = !isMobileNavVisible;
+            const mobileNav = document.getElementById('mobile-nav');
+            const overlay = document.querySelector('.mobile-nav-overlay');
+            const burgerMenu = document.querySelector('.burger-menu');
+            
+            if (isMobileNavVisible) {
+                mobileNav.classList.add('active');
+                overlay.classList.add('active');
+                burgerMenu.classList.add('active');
+            } else {
+                mobileNav.classList.remove('active');
+                overlay.classList.remove('active');
+                burgerMenu.classList.remove('active');
+            }
+        }
+
+        function closeMobileNav() {
+            isMobileNavVisible = false;
+            const mobileNav = document.getElementById('mobile-nav');
+            const overlay = document.querySelector('.mobile-nav-overlay');
+            const burgerMenu = document.querySelector('.burger-menu');
+            
+            mobileNav.classList.remove('active');
+            overlay.classList.remove('active');
+            burgerMenu.classList.remove('active');
         }
 
         function addToCart(id, name, price) {
@@ -776,6 +973,13 @@
             document.getElementById('search').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     filterProducts();
+                }
+            });
+            
+            // Закрытие мобильного меню при клике вне его
+            document.addEventListener('click', function(e) {
+                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                    closeMobileNav();
                 }
             });
         });
