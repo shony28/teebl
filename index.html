@@ -877,7 +877,7 @@
                 
                 <div class="product-actions">
                     <input type="number" id="page-quantity" min="1" value="1">
-                    <button id="page-add-button">Добавить в корзину</button>
+                    <button id="page-add-button">Додати до кошику</button>
                 </div>
             </div>
         </div>
@@ -885,23 +885,23 @@
 
     <div id="cart">
         <div class="cart-header">
-            <h2>Корзина</h2>
+            <h2>Кошик</h2>
         </div>
         <div class="cart-container">
             <div id="cart-items"></div>
             <div id="order-form">
                 <div class="form-group">
-                    <label for="phone">Номер телефона</label>
+                    <label for="phone">Номер телефону</label>
                     <input type="text" id="phone" placeholder="Введите номер телефона">
                 </div>
                 <div class="form-group">
-                    <label for="city">Город</label>
+                    <label for="city">Місто</label>
                     <input type="text" id="city" placeholder="Введите ваш город">
                 </div>
                 <div class="form-group">
                     <label for="delivery">Служба доставки</label>
                     <select id="delivery">
-                        <option value="">Выберите службу доставки</option>
+                        <option value="">Виберіть службу доставки</option>
                         <option value="EMS">EMS</option>
                         <option value="DHL">DHL</option>
                         <option value="FedEx">FedEx</option>
@@ -909,11 +909,11 @@
                     </select>
                 </div>
                 <div class="order-summary">
-                    <p>Итоговая сумма: <span id="total-price">0</span> грн</p>
-                    <p>Общее количество товаров: <span id="total-quantity">0</span></p>
+                    <p>Сума: <span id="total-price">0</span> грн</p>
+                    <p>Загальна кількість товарів: <span id="total-quantity">0</span></p>
                 </div>
-                <button id="place-order" onclick="placeOrder()">Оформить заказ</button>
-                <button class="cart-button" onclick="toggleCart()">Скрыть корзину</button>
+                <button id="place-order" onclick="placeOrder()">Оформити замовлення</button>
+                <button class="cart-button" onclick="toggleCart()">Приховати кошик</button>
             </div>
         </div>
     </div>
@@ -1081,7 +1081,7 @@
             if (subcategories.length > 0) {
                 const subcategoriesTitle = document.createElement('h2');
                 subcategoriesTitle.textContent = 'Підкатегорії';
-                subcategoriesTitle.style.cssText = 'margin: 20px 30px 10px 0; font-size: 20px; color: #555;';
+                subcategoriesTitle.style.cssText = 'margin: 20px 30px 10px 30px; font-size: 20px; color: #555;';
                 productsContainer.appendChild(subcategoriesTitle);
                 
                 renderCategories(subcategories, productsContainer);
@@ -1167,7 +1167,7 @@
                         <p class="price">${price} грн</p>
                         <div class="quantity-and-button">
                             <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
-                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Добавить</button>
+                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Додати</button>
                         </div>
                     `;
                     productsContainer.appendChild(productElement);
@@ -1435,7 +1435,7 @@
             const delivery = document.getElementById('delivery').value.trim();
 
             if (cart.length === 0) {
-                alert("Корзина пуста!");
+                alert("Кошик порожній!");
                 return;
             }
 
