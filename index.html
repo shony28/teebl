@@ -913,7 +913,7 @@
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
-        const CATEGORIES_RANGE = 'category!A2:C';
+        const CATEGORIES_RANGE = 'category!A2:D';
         let allCategories = [];
         let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
@@ -1100,26 +1100,29 @@
         }
 
         // Отрендерить категории как плитки
-        function renderCategories(categories, container = null) {
-            const targetContainer = container || document.getElementById('products');
-            
-            if (!container) {
-                targetContainer.innerHTML = '';
-            }
-            
-            categories.forEach(category => {
-                const [id, name] = category;
-                const categoryElement = document.createElement('div');
-                categoryElement.className = 'product'; // Используем стили товара
-                categoryElement.style.cursor = 'pointer';
-                categoryElement.onclick = () => showCategory(id);
+            function renderCategories(categories, container = null) {
+                const targetContainer = container || document.getElementById('products');
                 
-                categoryElement.innerHTML = `
-                    <h2>${name}</h2>
-                                `;
-                targetContainer.appendChild(categoryElement);
-            });
-        }
+                if (!container) {
+                    targetContainer.innerHTML = '';
+                }
+                
+                categories.forEach(category => {
+                    const [id, name, parentId, imageUrl] = category;
+                    const categoryElement = document.createElement('div');
+                    categoryElement.className = 'product'; // Используем стили товара
+                    categoryElement.style.cursor = 'pointer';
+                    categoryElement.onclick = () => showCategory(id);
+                    
+                    const imageHtml = imageUrl ? `<img src="${imageUrl}" alt="${name}" loading="lazy">` : '';
+                    
+                    categoryElement.innerHTML = `
+                        ${imageHtml}
+                        <h2>${name}</h2>
+                    `;
+                    targetContainer.appendChild(categoryElement);
+                });
+            }
 
             function renderProducts(products, container = null) {
                 if (!products || !Array.isArray(products)) {
