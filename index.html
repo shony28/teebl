@@ -1092,11 +1092,8 @@
                 categoryElement.onclick = () => showCategory(id);
                 
                 categoryElement.innerHTML = `
-                    <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #007bff, #0056b3); color: white; font-size: 24px; font-weight: bold;">
-                        📁
-                    </div>
                     <h2>${name}</h2>
-                    <p class="description">Перейти в категорию</p>
+                    
                     <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
                         <button style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px;" onclick="event.stopPropagation(); showCategory('${id}')">
                             Открыть
