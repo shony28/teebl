@@ -843,7 +843,7 @@
         <div class="header-top__search-field">
             <img class="header-top__icon-32-px-search" src="icon-32-px-search0.svg" alt="Search Icon" />
             <div class="header-top__search">
-                <input type="text" id="search" placeholder="Поиск товаров..." oninput="toggleResetButton()">
+                <input type="text" id="search" placeholder="Пошук товарів..." oninput="toggleResetButton()">
                 <span id="reset-btn" onclick="resetSearch()" style="display: none;">×</span>
             </div>
         </div>
@@ -863,7 +863,7 @@
     <div id="products"></div>
 
     <div id="product-page" class="product-page">
-        <button class="back-button" onclick="showProductsList()">← Назад к товарам</button>
+        <button class="back-button" onclick="showProductsList()">← Назад до товарів</button>
         
         <div class="product-details">
             <div class="product-image-large">
@@ -1249,7 +1249,7 @@
                 
                 // Заголовок результатов поиска
                 const title = document.createElement('h2');
-                title.textContent = `Результаты поиска: "${searchTerm}"`;
+                title.textContent = `Результати пошуку: "${searchTerm}"`;
                 title.style.cssText = 'text-align: center; margin: 20px 0; color: #333;';
                 productsContainer.appendChild(title);
                 
@@ -1275,8 +1275,8 @@
                 // Показать найденные товары
                 if (filteredProducts.length > 0) {
                     const productsTitle = document.createElement('h3');
-                    productsTitle.textContent = 'Товары';
-                    productsTitle.style.cssText = 'margin: 20px 0 10px 0; color: #555;';
+                    productsTitle.textContent = 'Товари';
+                    productsTitle.style.cssText = 'margin: 20px 30px 10px 30px; color: #555;';
                     productsContainer.appendChild(productsTitle);
                     
                     renderProducts(filteredProducts, productsContainer);
@@ -1285,7 +1285,7 @@
                 // Если ничего не найдено
                 if (filteredProducts.length === 0 && filteredCategories.length === 0) {
                     const noResults = document.createElement('p');
-                    noResults.textContent = 'Ничего не найдено';
+                    noResults.textContent = 'Нічого не знайдено';
                     noResults.style.cssText = 'text-align: center; color: #666; font-size: 18px; margin: 40px 0;';
                     productsContainer.appendChild(noResults);
                 }
