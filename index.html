@@ -683,12 +683,7 @@
             font-size: 16px;
         }
 
-        .back-button::before {
-            content: "←";
-            font-size: 18px;
-            margin-right: 8px;
-            font-weight: bold;
-        }
+
 
         .product-details {
             display: flex;
@@ -1063,7 +1058,7 @@
             // Добавить кнопку "Назад"
             const backButton = document.createElement('button');
             backButton.className = 'back-button';
-            backButton.textContent = 'Назад';
+            backButton.textContent = '← Назад';
             backButton.onclick = () => {
                 const parentCategory = allCategories.find(c => c[0] === categoryId);
                 if (parentCategory && parentCategory[2]) {
