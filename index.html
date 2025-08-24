@@ -913,6 +913,9 @@
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
+        const CATEGORIES_RANGE = 'category!A2:C';
+        let allCategories = [];
+        let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
         let isCartVisible = false;
         let isMobileNavVisible = false;
@@ -935,45 +938,191 @@
                 return;
             }
             
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${RANGE}`;
-            
             try {
-                const response = await fetch(gvizUrl);
-                const textData = await response.text();
-                const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-                const data = JSON.parse(jsonString);
-                const rows = data.table.rows;
-                const formattedProducts = rows.map(row => {
+                // Загружаем товары
+                const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F`;
+                const productsResponse = await fetch(productsUrl);
+                const productsTextData = await productsResponse.text();
+                const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+                const productsData = JSON.parse(productsJsonString);
+                const productsRows = productsData.table.rows;
+                const formattedProducts = productsRows.map(row => {
                     return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
                 });
                 allProducts = formattedProducts;
 
-                // Сначала проверяем хеш, потом рендерим товары
+                // Загружаем категории
+                const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
+                const categoriesResponse = await fetch(categoriesUrl);
+                const categoriesTextData = await categoriesResponse.text();
+                const categoriesJsonString = categoriesTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+                const categoriesData = JSON.parse(categoriesJsonString);
+                const categoriesRows = categoriesData.table.rows;
+                const formattedCategories = categoriesRows.map(row => {
+                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+                });
+                allCategories = formattedCategories;
+
+                // Проверяем хеш для определения что показывать
                 const hash = window.location.hash.substring(1);
                 if (hash) {
-                    checkHashAndShowProduct();
-                } else {
-                    renderProducts(formattedProducts);
+                    // Сначала проверяем, не товар ли это
+                    const product = allProducts.find(p => p[0] === hash);
+                    if (product) {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        showProductPage(id, name, description, price, imageUrl);
+                        return;
+                    }
+                    
+                    // Если не товар, проверяем категорию
+                    const category = allCategories.find(c => c[0] === hash);
+                    if (category) {
+                        showCategory(hash);
+                        return;
+                    }
                 }
+                
+                // По умолчанию показываем главную страницу с категориями
+                showMainCategories();
                 
             } catch (error) {
                 console.error("Ошибка при загрузке данных:", error);
             }
         }
 
-            function renderProducts(products) {
+        // Показать главные категории (без родительских)
+        function showMainCategories() {
+            currentCategoryId = null;
+            const mainCategories = allCategories.filter(category => !category[2]); // tags пустые
+            renderCategories(mainCategories);
+            document.getElementById('products').classList.remove('hidden');
+            document.getElementById('product-page').classList.remove('active');
+        }
+
+        // Показать категорию (подкатегории и товары)
+        function showCategory(categoryId) {
+            currentCategoryId = categoryId;
+            window.history.pushState({categoryId: categoryId}, '', `#${categoryId}`);
+            
+            // Найти подкатегории данной категории
+            const subcategories = allCategories.filter(category => category[2] === categoryId);
+            
+            // Найти товары данной категории
+            const categoryProducts = allProducts.filter(product => product[5] === categoryId);
+            
+            renderCategoryPage(categoryId, subcategories, categoryProducts);
+            document.getElementById('products').classList.remove('hidden');
+            document.getElementById('product-page').classList.remove('active');
+        }
+
+        // Отрендерить страницу категории
+        function renderCategoryPage(categoryId, subcategories, products) {
+            const productsContainer = document.getElementById('products');
+            productsContainer.innerHTML = '';
+            
+            // Найти название категории
+            const currentCategory = allCategories.find(c => c[0] === categoryId);
+            const categoryName = currentCategory ? currentCategory[1] : categoryId;
+            
+            // Добавить кнопку "Назад"
+            const backButton = document.createElement('button');
+            backButton.className = 'back-button';
+            backButton.textContent = '← Назад';
+            backButton.onclick = () => {
+                const parentCategory = allCategories.find(c => c[0] === categoryId);
+                if (parentCategory && parentCategory[2]) {
+                    // Если есть родительская категория, переходим к ней
+                    showCategory(parentCategory[2]);
+                } else {
+                    // Иначе на главную
+                    showMainCategories();
+                    window.history.pushState({}, '', window.location.pathname + window.location.search);
+                }
+            };
+            productsContainer.appendChild(backButton);
+            
+            // Заголовок категории
+            const title = document.createElement('h1');
+            title.textContent = categoryName;
+            title.style.cssText = 'text-align: center; margin: 20px 0; font-size: 28px; color: #333;';
+            productsContainer.appendChild(title);
+            
+            // Показать подкатегории, если есть
+            if (subcategories.length > 0) {
+                const subcategoriesTitle = document.createElement('h2');
+                subcategoriesTitle.textContent = 'Подкатегории';
+                subcategoriesTitle.style.cssText = 'margin: 20px 0 10px 0; font-size: 20px; color: #555;';
+                productsContainer.appendChild(subcategoriesTitle);
+                
+                renderCategories(subcategories, productsContainer);
+            }
+            
+            // Показать товары, если есть
+            if (products.length > 0) {
+                const productsTitle = document.createElement('h2');
+                productsTitle.textContent = 'Товары';
+                productsTitle.style.cssText = 'margin: 20px 0 10px 0; font-size: 20px; color: #555;';
+                productsContainer.appendChild(productsTitle);
+                
+                renderProducts(products, productsContainer);
+            }
+            
+            // Если нет ни подкатегорий, ни товаров
+            if (subcategories.length === 0 && products.length === 0) {
+                const emptyMessage = document.createElement('p');
+                emptyMessage.textContent = 'В этой категории пока нет товаров';
+                emptyMessage.style.cssText = 'text-align: center; color: #666; font-size: 18px; margin: 40px 0;';
+                productsContainer.appendChild(emptyMessage);
+            }
+        }
+
+        // Отрендерить категории как плитки
+        function renderCategories(categories, container = null) {
+            const targetContainer = container || document.getElementById('products');
+            
+            if (!container) {
+                targetContainer.innerHTML = '';
+            }
+            
+            categories.forEach(category => {
+                const [id, name] = category;
+                const categoryElement = document.createElement('div');
+                categoryElement.className = 'product'; // Используем стили товара
+                categoryElement.style.cursor = 'pointer';
+                categoryElement.onclick = () => showCategory(id);
+                
+                categoryElement.innerHTML = `
+                    <div style="height: 150px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #007bff, #0056b3); color: white; font-size: 24px; font-weight: bold;">
+                        📁
+                    </div>
+                    <h2>${name}</h2>
+                    <p class="description">Перейти в категорию</p>
+                    <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                        <button style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; cursor: pointer; font-size: 16px;" onclick="event.stopPropagation(); showCategory('${id}')">
+                            Открыть
+                        </button>
+                    </div>
+                `;
+                targetContainer.appendChild(categoryElement);
+            });
+        }
+
+            function renderProducts(products, container = null) {
                 if (!products || !Array.isArray(products)) {
                     console.error("Invalid products array:", products);
                     return;
                 }
 
-                const productsContainer = document.getElementById('products');
-                productsContainer.innerHTML = '';
+                const targetContainer = container || document.getElementById('products');
+                
+                if (!container) {
+                    targetContainer.innerHTML = '';
+                }
+                
                 products.forEach(product => {
-                    const [id, name, description, price, imageUrl] = product;
+                    const [id, name, description, price, imageUrl, tags] = product;
                     const productElement = document.createElement('div');
                     productElement.className = 'product';
-                    // Добавляем обработчик клика на весь элемент товара
                     productElement.style.cursor = 'pointer';
                     productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
                     
@@ -987,7 +1136,7 @@
                             <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Добавить</button>
                         </div>
                     `;
-                    productsContainer.appendChild(productElement);
+                    targetContainer.appendChild(productElement);
                 });
             }
 
@@ -1025,24 +1174,96 @@
             // Убираем хеш из URL
             window.history.pushState({}, '', window.location.pathname + window.location.search);
             
-            // Показываем список товаров и скрываем страницу товара
-            document.getElementById('products').classList.remove('hidden');
+            // Показываем главную страницу с категориями
+            showMainCategories();
+            
+            // Скрываем страницу товара
             document.getElementById('product-page').classList.remove('active');
             
             // Прокручиваем к началу страницы
             window.scrollTo(0, 0);
         }
-
         function filterProducts() {
-            const searchTerm = document.getElementById('search').value.toLowerCase();
-            const filteredProducts = allProducts.filter(product => product[1].toLowerCase().includes(searchTerm));
-            renderProducts(filteredProducts);
-            
-        }
+                const searchTerm = document.getElementById('search').value.toLowerCase();
+                
+                if (searchTerm.length === 0) {
+                    // Если поиск пустой, показываем текущую категорию или главную
+                    if (currentCategoryId) {
+                        showCategory(currentCategoryId);
+                    } else {
+                        showMainCategories();
+                    }
+                    return;
+                }
+                
+                // Ищем товары по названию
+                const filteredProducts = allProducts.filter(product => 
+                    product[1].toLowerCase().includes(searchTerm)
+                );
+                
+                // Ищем категории по названию
+                const filteredCategories = allCategories.filter(category =>
+                    category[1].toLowerCase().includes(searchTerm)
+                );
+                
+                // Отображаем результаты поиска
+                const productsContainer = document.getElementById('products');
+                productsContainer.innerHTML = '';
+                
+                // Заголовок результатов поиска
+                const title = document.createElement('h2');
+                title.textContent = `Результаты поиска: "${searchTerm}"`;
+                title.style.cssText = 'text-align: center; margin: 20px 0; color: #333;';
+                productsContainer.appendChild(title);
+                
+                // Кнопка "Очистить поиск"
+                const clearButton = document.createElement('button');
+                clearButton.className = 'back-button';
+                clearButton.textContent = '← Очистить поиск';
+                clearButton.onclick = () => {
+                    resetSearch();
+                };
+                productsContainer.appendChild(clearButton);
+                
+                // Показать найденные категории
+                if (filteredCategories.length > 0) {
+                    const categoriesTitle = document.createElement('h3');
+                    categoriesTitle.textContent = 'Категории';
+                    categoriesTitle.style.cssText = 'margin: 20px 0 10px 0; color: #555;';
+                    productsContainer.appendChild(categoriesTitle);
+                    
+                    renderCategories(filteredCategories, productsContainer);
+                }
+                
+                // Показать найденные товары
+                if (filteredProducts.length > 0) {
+                    const productsTitle = document.createElement('h3');
+                    productsTitle.textContent = 'Товары';
+                    productsTitle.style.cssText = 'margin: 20px 0 10px 0; color: #555;';
+                    productsContainer.appendChild(productsTitle);
+                    
+                    renderProducts(filteredProducts, productsContainer);
+                }
+                
+                // Если ничего не найдено
+                if (filteredProducts.length === 0 && filteredCategories.length === 0) {
+                    const noResults = document.createElement('p');
+                    noResults.textContent = 'Ничего не найдено';
+                    noResults.style.cssText = 'text-align: center; color: #666; font-size: 18px; margin: 40px 0;';
+                    productsContainer.appendChild(noResults);
+                }
+            }
 
         function resetSearch() {
             document.getElementById('search').value = '';
-            renderProducts(allProducts);
+            
+            // Показываем текущую категорию или главную страницу
+            if (currentCategoryId) {
+                showCategory(currentCategoryId);
+            } else {
+                showMainCategories();
+            }
+            
             toggleResetButton();
         }
 
@@ -1274,34 +1495,37 @@
 
       //  функцию для проверки хеша и показа товара
         function checkHashAndShowProduct() {
-            const hash = window.location.hash.substring(1); // Убираем #
-            
-            // Если товары еще не загрузились, ждем
-            if (allProducts.length === 0) {
-                return;
-            }
-            
-            if (hash) {
-                const product = allProducts.find(p => p[0] === hash); // Ищем по ID (первый элемент)
-                if (product) {
-                    const [id, name, description, price, imageUrl] = product;
-                    showProductPage(id, name, description, price, imageUrl);
-                    return; // Важно: выходим из функции, чтобы не показывать список
-                } else {
-                    console.log(`Товар с ID ${hash} не найден`);
+                const hash = window.location.hash.substring(1);
+                
+                // Если данные еще не загрузились, ждем
+                if (allProducts.length === 0 || allCategories.length === 0) {
+                    return;
                 }
+                
+                if (hash) {
+                    // Сначала проверяем, не товар ли это
+                    const product = allProducts.find(p => p[0] === hash);
+                    if (product) {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        showProductPage(id, name, description, price, imageUrl);
+                        return;
+                    }
+                    
+                    // Если не товар, проверяем категорию
+                    const category = allCategories.find(c => c[0] === hash);
+                    if (category) {
+                        showCategory(hash);
+                        return;
+                    }
+                    
+                    // Если ничего не найдено, убираем хеш и показываем главную
+                    console.log(`Ни товар, ни категория с ID ${hash} не найдены`);
+                    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                }
+                
+                // По умолчанию показываем главную страницу с категориями
+                showMainCategories();
             }
-            // Если хеша нет или товар не найден, показываем список товаров
-            if (!hash) {
-                showProductsList();
-            } else {
-                // Если товар не найден, всё равно показываем список и убираем хеш
-                console.log(`Товар с ID ${hash} не найден`);
-                window.history.replaceState({}, '', window.location.pathname + window.location.search);
-                showProductsList();
-            }
-                        
-        }
 // Добавить функцию для дебага (можно удалить после проверки)
 function debugProductLoad() {
     console.log('Всего товаров загружено:', allProducts.length);
