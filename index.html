@@ -661,6 +661,144 @@
                 padding: 16px 160px;
             }
         }
+        .product-page {
+            display: none;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .product-page.active {
+            display: block;
+        }
+
+        .back-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .back-button:hover {
+            background: #0056b3;
+        }
+
+        .product-details {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .product-image-large {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .product-image-large img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .product-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .product-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0;
+            color: #333;
+        }
+
+        .product-article {
+            font-size: 14px;
+            color: #666;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 4px;
+            width: fit-content;
+        }
+
+        .product-description {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .product-actions input[type="number"] {
+            width: 80px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .product-actions button {
+            padding: 12px 24px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .product-actions button:hover {
+            background: #218838;
+        }
+
+        @media (max-width: 768px) {
+            .product-details {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .product-image-large {
+                max-width: none;
+            }
+            
+            .product-title {
+                font-size: 24px;
+            }
+            
+            .product-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .product-actions input[type="number"] {
+                width: 100%;
+            }
+        }
+
+        /* Скрываем список товаров когда показана карточка */
+        #products.hidden {
+            display: none;
+        }
 
     </style>
 </head>
@@ -713,6 +851,29 @@
     </div>
 
     <div id="products"></div>
+
+    <div id="product-page" class="product-page">
+        <button class="back-button" onclick="showProductsList()">← Назад к товарам</button>
+        
+        <div class="product-details">
+            <div class="product-image-large">
+                <img id="page-image" src="" alt="">
+            </div>
+            
+            <div class="product-info">
+                <h1 id="page-title" class="product-title"></h1>
+                <div id="page-article" class="product-article"></div>
+                <div id="page-description" class="product-description"></div>
+                <div id="page-price" class="product-price"></div>
+                
+                <div class="product-actions">
+                    <input type="number" id="page-quantity" min="1" value="1">
+                    <button id="page-add-button">Добавить в корзину</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="cart">
         <div class="cart-header">
             <h2>Корзина</h2>
@@ -748,7 +909,7 @@
         </div>
     </div>
     <script>
-        const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1vvp8cUj85X1R_quv2QkB_PsXUgmSwmlHEERLZqyxYDY'
+        const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1a8iWHQ...'
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
@@ -792,30 +953,76 @@
             }
         }
 
-        function renderProducts(products) {
-            if (!products || !Array.isArray(products)) {
-                console.error("Invalid products array:", products);
-                return;
+            function renderProducts(products) {
+                if (!products || !Array.isArray(products)) {
+                    console.error("Invalid products array:", products);
+                    return;
+                }
+
+                const productsContainer = document.getElementById('products');
+                productsContainer.innerHTML = '';
+                products.forEach(product => {
+                    const [id, name, description, price, imageUrl] = product;
+                    const productElement = document.createElement('div');
+                    productElement.className = 'product';
+                    // Добавляем обработчик клика на весь элемент товара
+                    productElement.style.cursor = 'pointer';
+                    productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
+                    
+                    productElement.innerHTML = `
+                        <img src="${imageUrl}" alt="${name}" loading="lazy">
+                        <h2>${name}</h2>
+                        <p class="description">${description}</p>
+                        <p class="price">${price} грн</p>
+                        <div class="quantity-and-button">
+                            <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
+                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Добавить</button>
+                        </div>
+                    `;
+                    productsContainer.appendChild(productElement);
+                });
             }
 
-            const productsContainer = document.getElementById('products');
-            productsContainer.innerHTML = '';
-            products.forEach(product => {
-                const [id, name, description, price, imageUrl] = product;
-                const productElement = document.createElement('div');
-                productElement.className = 'product';
-                productElement.innerHTML = `
-                    <img src="${imageUrl}" alt="${name}" loading="lazy">
-                    <h2>${name}</h2>
-                    <p class="description">${description}</p>
-                    <p class="price">${price} грн</p>
-                    <div class="quantity-and-button">
-                        <input type="number" id="quantity-${id}" min="1" value="1">
-                        <button onclick="addToCart('${id}', '${name}', '${price}')">Добавить</button>
-                    </div>
-                `;
-                productsContainer.appendChild(productElement);
-            });
+                // функции для работы со страницей товара
+        function showProductPage(id, name, description, price, imageUrl) {
+            // Обновляем URL с хешем
+            window.history.pushState({productId: id}, '', `#${id}`);
+            
+            // Заполняем данные страницы товара
+            document.getElementById('page-image').src = imageUrl;
+            document.getElementById('page-image').alt = name;
+            document.getElementById('page-title').textContent = name;
+            document.getElementById('page-article').textContent = `Артикул: ${id}`;
+            document.getElementById('page-description').textContent = description;
+            document.getElementById('page-price').textContent = `${price} грн`;
+            
+            // Устанавливаем обработчик для кнопки добавления
+            const addButton = document.getElementById('page-add-button');
+            addButton.onclick = () => {
+                const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
+                const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
+                quantityInput.value = quantity;
+                addToCart(id, name, price);
+            };
+            
+            // Показываем страницу товара и скрываем список товаров
+            document.getElementById('products').classList.add('hidden');
+            document.getElementById('product-page').classList.add('active');
+            
+            // Прокручиваем к началу страницы
+            window.scrollTo(0, 0);
+        }
+
+        function showProductsList() {
+            // Убираем хеш из URL
+            window.history.pushState({}, '', window.location.pathname + window.location.search);
+            
+            // Показываем список товаров и скрываем страницу товара
+            document.getElementById('products').classList.remove('hidden');
+            document.getElementById('product-page').classList.remove('active');
+            
+            // Прокручиваем к началу страницы
+            window.scrollTo(0, 0);
         }
 
         function filterProducts() {
@@ -1021,9 +1228,27 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener('DOMContentLoaded', function() {
             fetchProducts();
             loadCart();
+            
+            // Проверяем хеш при загрузке страницы
+            checkHashAndShowProduct();
+            
+            // Обработчик изменения хеша
+            window.addEventListener('hashchange', checkHashAndShowProduct);
+            
+            // Обработчик кнопки "Назад" браузера
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.productId) {
+                    // Если в состоянии есть ID товара, показываем товар
+                    checkHashAndShowProduct();
+                } else {
+                    // Иначе показываем список товаров
+                    showProductsList();
+                }
+            });
+            
             document.getElementById('search').addEventListener('input', function(e) {
                 filterProducts();
             });
@@ -1035,10 +1260,26 @@
                 }
             });
         });
+
+      //  функцию для проверки хеша и показа товара
+        function checkHashAndShowProduct() {
+            const hash = window.location.hash.substring(1); // Убираем #
+            if (hash && allProducts.length > 0) {
+                const product = allProducts.find(p => p[0] === hash); // Ищем по ID (первый элемент)
+                if (product) {
+                    const [id, name, description, price, imageUrl] = product;
+                    showProductPage(id, name, description, price, imageUrl);
+                } else {
+                    // Если товар не найден, показываем список
+                    showProductsList();
+                }
+            } else {
+                // Если хеша нет, показываем список товаров
+                showProductsList();
+            }
+        }
     </script>
 </body>
 </html>
-
-
 
 
