@@ -168,7 +168,7 @@
             background: transparent;
             width: 100%;
             font-family: "Inter-Medium", sans-serif;
-            font-size: 16px;
+            font-size: 18px;
             color: #333;
             outline: none;
         }
@@ -684,10 +684,12 @@
             <div class="header-top__contact-us">Контакти</div>
         </div>
         
-        
-
-
-
+        <div class="header-top__icons">
+            <div class="header-top__icon-32-px-cart" onclick="toggleCart()">
+                <img class="header-top__cart-1" src="cart-10.svg" alt="Cart" />
+                <div id="cart-count">0</div>
+            </div>
+        </div>
         
         <!-- Поиск на мобильных будет под основным контентом -->
         <div class="header-top__search-field">
@@ -698,14 +700,8 @@
             </div>
         </div>
 
-        <div class="header-top__icons">
-            <div class="header-top__icon-32-px-cart" onclick="toggleCart()">
-                <img class="header-top__cart-1" src="cart-10.svg" alt="Cart" />
-                <div id="cart-count">0</div>
-            </div>
-        </div>
-
-
+        
+        
     </div>
 
     <!-- Мобильная навигация -->
@@ -753,7 +749,7 @@
     </div>
     <script>
         const RANGE = 'goods!A2:E';
-        const TELEGRAM_BOT_TOKEN = '6011167887:AAHf0yAGVoH4MFnuQdyP5PAk_iSgsVV4l2E';
+        const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
         let cart = [];
         let isCartVisible = false;
