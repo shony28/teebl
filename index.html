@@ -15,9 +15,6 @@
             padding: 0;
         }
 
-        h2 {
-           margin: 20px 30px 10px;
-        }
 
  
         .product {
@@ -1083,8 +1080,8 @@
             // Показать подкатегории, если есть
             if (subcategories.length > 0) {
                 const subcategoriesTitle = document.createElement('h2');
-                subcategoriesTitle.textContent = 'Подкатегории';
-                subcategoriesTitle.style.cssText = 'margin: 20px 0 10px 0; font-size: 20px; color: #555;';
+                subcategoriesTitle.textContent = 'Підкатегорії';
+                subcategoriesTitle.style.cssText = 'margin: 20px 30px 10px 0; font-size: 20px; color: #555;';
                 productsContainer.appendChild(subcategoriesTitle);
                 
                 renderCategories(subcategories, productsContainer);
