@@ -947,10 +947,14 @@
                     return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
                 });
                 allProducts = formattedProducts;
-                renderProducts(formattedProducts);
-                
-                // ВАЖНО: проверяем хеш только после загрузки товаров
-                checkHashAndShowProduct();
+
+                // Сначала проверяем хеш, потом рендерим товары
+                const hash = window.location.hash.substring(1);
+                if (hash) {
+                    checkHashAndShowProduct();
+                } else {
+                    renderProducts(formattedProducts);
+                }
                 
             } catch (error) {
                 console.error("Ошибка при загрузке данных:", error);
@@ -1287,9 +1291,16 @@
                     console.log(`Товар с ID ${hash} не найден`);
                 }
             }
-            
             // Если хеша нет или товар не найден, показываем список товаров
-            showProductsList();
+            if (!hash) {
+                showProductsList();
+            } else {
+                // Если товар не найден, всё равно показываем список и убираем хеш
+                console.log(`Товар с ID ${hash} не найден`);
+                window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                showProductsList();
+            }
+                        
         }
 // Добавить функцию для дебага (можно удалить после проверки)
 function debugProductLoad() {
@@ -1299,7 +1310,7 @@ function debugProductLoad() {
         console.log('Первый товар:', allProducts[0]);
     }
 }
-        
+
     </script>
 </body>
 </html>
