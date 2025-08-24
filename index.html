@@ -990,11 +990,34 @@
             }
         }
 
-        // Показать главные категории (без родительских)
+        
+        // Показать главные категории (без родительских) и товары без категории
         function showMainCategories() {
             currentCategoryId = null;
-            const mainCategories = allCategories.filter(category => !category[2]); // tags пустые
-            renderCategories(mainCategories);
+            const productsContainer = document.getElementById('products');
+            productsContainer.innerHTML = '';
+            
+            // Главные категории (без родительских)
+            const mainCategories = allCategories.filter(category => !category[2]);
+            
+            // Товары без категории (пустые или отсутствующие tags)
+            const uncategorizedProducts = allProducts.filter(product => !product[5] || product[5].trim() === '');
+            
+            // Отображаем категории
+            if (mainCategories.length > 0) {
+                renderCategories(mainCategories, productsContainer);
+            }
+            
+            // Если есть товары без категории, добавляем заголовок и отображаем их
+            if (uncategorizedProducts.length > 0) {
+                const productsTitle = document.createElement('h2');
+                productsTitle.textContent = 'Товары';
+                productsTitle.style.cssText = 'margin: 20px 0 10px 0; font-size: 20px; color: #555;';
+                productsContainer.appendChild(productsTitle);
+                
+                renderProducts(uncategorizedProducts, productsContainer);
+            }
+            
             document.getElementById('products').classList.remove('hidden');
             document.getElementById('product-page').classList.remove('active');
         }
