@@ -748,6 +748,7 @@
         </div>
     </div>
     <script>
+        const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1a8iWHQ...'
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
@@ -766,8 +767,14 @@
         }
 
         async function fetchProducts() {
-            const SPREADSHEET_ID = getParameterByName('id');
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&range=${RANGE}`;
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+            
+            if (!spreadsheetId) {
+                console.error('Не указан ID таблицы ни в константе, ни в параметрах URL');
+                return;
+            }
+            
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${RANGE}`;
             
             try {
                 const response = await fetch(gvizUrl);
