@@ -1101,7 +1101,7 @@
             // Если нет ни подкатегорий, ни товаров
             if (subcategories.length === 0 && products.length === 0) {
                 const emptyMessage = document.createElement('p');
-                emptyMessage.textContent = 'В этой категории пока нет товаров';
+                emptyMessage.textContent = 'У цій категорії поки немає товарів';
                 emptyMessage.style.cssText = 'text-align: center; color: #666; font-size: 18px; margin: 40px 0;';
                 productsContainer.appendChild(emptyMessage);
             }
@@ -1265,8 +1265,8 @@
                 // Показать найденные категории
                 if (filteredCategories.length > 0) {
                     const categoriesTitle = document.createElement('h3');
-                    categoriesTitle.textContent = 'Категории';
-                    categoriesTitle.style.cssText = 'margin: 20px 0 10px 0; color: #555;';
+                    categoriesTitle.textContent = 'Категорії';
+                    categoriesTitle.style.cssText = 'margin: 20px 30px 10px 30px; color: #555;';
                     productsContainer.appendChild(categoriesTitle);
                     
                     renderCategories(filteredCategories, productsContainer);
