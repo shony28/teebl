@@ -800,32 +800,6 @@
             display: none;
         }
 
-        .category-tile {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 200px;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .category-tile:hover {
-            transform: translateY(-5px);
-        }
-
-        .category-content h2 {
-            margin: 0 0 10px 0;
-            font-size: 1.5em;
-        }
-
-        .category-content p {
-            margin: 0;
-            opacity: 0.8;
-        }
-
     </style>
 </head>
 <body>
@@ -936,12 +910,9 @@
     </div>
     <script>
         const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1a8iWHQ...'
-        const RANGE = 'goods!A2:F';
+        const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
-        const CATEGORY_RANGE = 'category!A2:C';
-        let allCategories = [];
-        let currentCategory = 'index';
         let cart = [];
         let isCartVisible = false;
         let isMobileNavVisible = false;
@@ -954,83 +925,6 @@
             if (!results) return null;
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        }
-
-        async function fetchCategories() {
-            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-            const gvizUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORY_RANGE}`;
-            
-            try {
-                const response = await fetch(gvizUrl);
-                const textData = await response.text();
-                const jsonString = textData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-                const data = JSON.parse(jsonString);
-                const rows = data.table.rows;
-                allCategories = rows.map(row => {
-                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-                });
-            } catch (error) {
-                console.error("Ошибка при загрузке категорий:", error);
-            }
-        }
-
-        function renderCategories(parentId = 'index') {
-            const productsContainer = document.getElementById('products');
-            const categories = allCategories.filter(cat => cat[2] === parentId);
-            
-            productsContainer.innerHTML = '';
-            
-            categories.forEach(category => {
-                const [id, name] = category;
-                const categoryElement = document.createElement('div');
-                categoryElement.className = 'product category-tile';
-                categoryElement.onclick = () => showCategory(id);
-                
-                categoryElement.innerHTML = `
-                    <div class="category-content">
-                        <h2>${name}</h2>
-                        <p>Перейти в категорию</p>
-                    </div>
-                `;
-                productsContainer.appendChild(categoryElement);
-            });
-        }
-
-        function showCategory(categoryId) {
-            currentCategory = categoryId;
-            window.history.pushState({categoryId}, '', `#category-${categoryId}`);
-            
-            // Проверяем, есть ли подкатегории
-            const subCategories = allCategories.filter(cat => cat[2] === categoryId);
-            
-            if (subCategories.length > 0) {
-                // Показываем подкатегории
-                renderCategories(categoryId);
-            } else {
-                // Показываем товары этой категории
-                const categoryProducts = allProducts.filter(product => product[5] === categoryId);
-                renderProducts(categoryProducts);
-            }
-            
-            // Добавляем кнопку "Назад" если не на главной
-            if (categoryId !== 'index') {
-                addBackToCategoriesButton();
-            }
-        }
-
-        function addBackToCategoriesButton() {
-            const productsContainer = document.getElementById('products');
-            const backButton = document.createElement('button');
-            backButton.className = 'back-button';
-            backButton.textContent = '← Назад';
-            backButton.onclick = () => {
-                const parentCategory = allCategories.find(cat => 
-                    allCategories.some(subCat => subCat[2] === cat[0] && subCat[0] === currentCategory)
-                );
-                const parentId = parentCategory ? parentCategory[0] : 'index';
-                showCategory(parentId);
-            };
-            productsContainer.insertBefore(backButton, productsContainer.firstChild);
         }
 
         async function fetchProducts() {
@@ -1342,74 +1236,71 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
-                        loadCart();
-                        
-                        // Сначала загружаем категории, затем товары
-                        await fetchCategories();
-                        await fetchProducts();
-                        if (!window.location.hash) {
-                            renderCategories('index');
-                        }
-                        
-                        // После загрузки данных проверяем хеш и показываем соответствующий контент
+        document.addEventListener('DOMContentLoaded', function() {
+                loadCart();
+                
+                // Сначала загружаем товары (checkHashAndShowProduct вызовется в fetchProducts)
+                fetchProducts();
+                
+                // Обработчик изменения хеша
+                window.addEventListener('hashchange', checkHashAndShowProduct);
+                
+                // Обработчик кнопки "Назад" браузера
+                window.addEventListener('popstate', function(event) {
+                    if (event.state && event.state.productId) {
                         checkHashAndShowProduct();
-                        
-                        // Обработчик изменения хеша
-                        window.addEventListener('hashchange', checkHashAndShowProduct);
-                        
-                        // Обработчик кнопки "Назад" браузера
-                        window.addEventListener('popstate', function(event) {
-                            if (event.state && (event.state.productId || event.state.categoryId)) {
-                                checkHashAndShowProduct();
-                            } else {
-                                // Проверяем хеш, возможно пользователь вручную изменил URL
-                                const hash = window.location.hash.substring(1);
-                                if (hash) {
-                                    checkHashAndShowProduct();
-                                } else {
-                                    showCategory('index');
-                                }
-                            }
-                        });
-                        
-                        document.getElementById('search').addEventListener('input', function(e) {
-                            filterProducts();
-                        });
-                        
-                        // Закрытие мобильного меню при клике вне его
-                        document.addEventListener('click', function(e) {
-                            if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                                closeMobileNav();
-                            }
-                        });
-                    });
+                    } else {
+                        // Проверяем хеш, возможно пользователь вручную изменил URL
+                        const hash = window.location.hash.substring(1);
+                        if (hash) {
+                            checkHashAndShowProduct();
+                        } else {
+                            showProductsList();
+                        }
+                    }
+                });
+                
+                document.getElementById('search').addEventListener('input', function(e) {
+                    filterProducts();
+                });
+                
+                // Закрытие мобильного меню при клике вне его
+                document.addEventListener('click', function(e) {
+                    if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                        closeMobileNav();
+                    }
+                });
+            });
 
       //  функцию для проверки хеша и показа товара
         function checkHashAndShowProduct() {
-            const hash = window.location.hash.substring(1);
+            const hash = window.location.hash.substring(1); // Убираем #
             
-            if (allProducts.length === 0 || allCategories.length === 0) {
+            // Если товары еще не загрузились, ждем
+            if (allProducts.length === 0) {
                 return;
             }
             
-            if (hash.startsWith('category-')) {
-                const categoryId = hash.replace('category-', '');
-                showCategory(categoryId);
-                return;
-            }
-            
-            if (hash && hash !== 'index') {
-                const product = allProducts.find(p => p[0] === hash);
+            if (hash) {
+                const product = allProducts.find(p => p[0] === hash); // Ищем по ID (первый элемент)
                 if (product) {
                     const [id, name, description, price, imageUrl] = product;
                     showProductPage(id, name, description, price, imageUrl);
-                    return;
+                    return; // Важно: выходим из функции, чтобы не показывать список
+                } else {
+                    console.log(`Товар с ID ${hash} не найден`);
                 }
             }
-            
-            // Показываем главную страницу с категориями
-            renderCategories('index');
+            // Если хеша нет или товар не найден, показываем список товаров
+            if (!hash) {
+                showProductsList();
+            } else {
+                // Если товар не найден, всё равно показываем список и убираем хеш
+                console.log(`Товар с ID ${hash} не найден`);
+                window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                showProductsList();
+            }
+                        
         }
 // Добавить функцию для дебага (можно удалить после проверки)
 function debugProductLoad() {
