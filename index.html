@@ -800,6 +800,25 @@
             display: none;
         }
 
+        .products-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .product {
+            border: 1px solid #ddd;
+            margin: 0; /* убираем margin, так как используем gap */
+            padding: 10px;
+            width: calc(100% - 40px);
+            max-width: 240px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform .1s;
+        }
+
     </style>
 </head>
 <body>
@@ -1105,10 +1124,14 @@
                     targetContainer.innerHTML = '';
                 }
                 
+                // Создаем контейнер для центрирования
+                const productsContainer = document.createElement('div');
+                productsContainer.className = 'products-container';
+                
                 categories.forEach(category => {
                     const [id, name, parentId, imageUrl] = category;
                     const categoryElement = document.createElement('div');
-                    categoryElement.className = 'product'; // Используем стили товара
+                    categoryElement.className = 'product';
                     categoryElement.style.cursor = 'pointer';
                     categoryElement.onclick = () => showCategory(id);
                     
@@ -1118,8 +1141,10 @@
                         ${imageHtml}
                         <h2>${name}</h2>
                     `;
-                    targetContainer.appendChild(categoryElement);
+                    productsContainer.appendChild(categoryElement);
                 });
+                
+                targetContainer.appendChild(productsContainer);
             }
 
             function renderProducts(products, container = null) {
@@ -1133,6 +1158,10 @@
                 if (!container) {
                     targetContainer.innerHTML = '';
                 }
+                
+                // Создаем контейнер для центрирования
+                const productsContainer = document.createElement('div');
+                productsContainer.className = 'products-container';
                 
                 products.forEach(product => {
                     const [id, name, description, price, imageUrl, tags] = product;
@@ -1151,8 +1180,10 @@
                             <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Добавить</button>
                         </div>
                     `;
-                    targetContainer.appendChild(productElement);
+                    productsContainer.appendChild(productElement);
                 });
+                
+                targetContainer.appendChild(productsContainer);
             }
 
                 // функции для работы со страницей товара
