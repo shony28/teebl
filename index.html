@@ -948,6 +948,10 @@
                 });
                 allProducts = formattedProducts;
                 renderProducts(formattedProducts);
+                
+                // ВАЖНО: проверяем хеш только после загрузки товаров
+                checkHashAndShowProduct();
+                
             } catch (error) {
                 console.error("Ошибка при загрузке данных:", error);
             }
@@ -1228,56 +1232,74 @@
             }
         }
 
-      document.addEventListener('DOMContentLoaded', function() {
-            fetchProducts();
-            loadCart();
-            
-            // Проверяем хеш при загрузке страницы
-            checkHashAndShowProduct();
-            
-            // Обработчик изменения хеша
-            window.addEventListener('hashchange', checkHashAndShowProduct);
-            
-            // Обработчик кнопки "Назад" браузера
-            window.addEventListener('popstate', function(event) {
-                if (event.state && event.state.productId) {
-                    // Если в состоянии есть ID товара, показываем товар
-                    checkHashAndShowProduct();
-                } else {
-                    // Иначе показываем список товаров
-                    showProductsList();
-                }
+        document.addEventListener('DOMContentLoaded', function() {
+                loadCart();
+                
+                // Сначала загружаем товары (checkHashAndShowProduct вызовется в fetchProducts)
+                fetchProducts();
+                
+                // Обработчик изменения хеша
+                window.addEventListener('hashchange', checkHashAndShowProduct);
+                
+                // Обработчик кнопки "Назад" браузера
+                window.addEventListener('popstate', function(event) {
+                    if (event.state && event.state.productId) {
+                        checkHashAndShowProduct();
+                    } else {
+                        // Проверяем хеш, возможно пользователь вручную изменил URL
+                        const hash = window.location.hash.substring(1);
+                        if (hash) {
+                            checkHashAndShowProduct();
+                        } else {
+                            showProductsList();
+                        }
+                    }
+                });
+                
+                document.getElementById('search').addEventListener('input', function(e) {
+                    filterProducts();
+                });
+                
+                // Закрытие мобильного меню при клике вне его
+                document.addEventListener('click', function(e) {
+                    if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                        closeMobileNav();
+                    }
+                });
             });
-            
-            document.getElementById('search').addEventListener('input', function(e) {
-                filterProducts();
-            });
-            
-            // Закрытие мобильного меню при клике вне его
-            document.addEventListener('click', function(e) {
-                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                    closeMobileNav();
-                }
-            });
-        });
 
       //  функцию для проверки хеша и показа товара
         function checkHashAndShowProduct() {
             const hash = window.location.hash.substring(1); // Убираем #
-            if (hash && allProducts.length > 0) {
+            
+            // Если товары еще не загрузились, ждем
+            if (allProducts.length === 0) {
+                return;
+            }
+            
+            if (hash) {
                 const product = allProducts.find(p => p[0] === hash); // Ищем по ID (первый элемент)
                 if (product) {
                     const [id, name, description, price, imageUrl] = product;
                     showProductPage(id, name, description, price, imageUrl);
+                    return; // Важно: выходим из функции, чтобы не показывать список
                 } else {
-                    // Если товар не найден, показываем список
-                    showProductsList();
+                    console.log(`Товар с ID ${hash} не найден`);
                 }
-            } else {
-                // Если хеша нет, показываем список товаров
-                showProductsList();
             }
+            
+            // Если хеша нет или товар не найден, показываем список товаров
+            showProductsList();
         }
+// Добавить функцию для дебага (можно удалить после проверки)
+function debugProductLoad() {
+    console.log('Всего товаров загружено:', allProducts.length);
+    console.log('Текущий хеш:', window.location.hash);
+    if (allProducts.length > 0) {
+        console.log('Первый товар:', allProducts[0]);
+    }
+}
+        
     </script>
 </body>
 </html>
