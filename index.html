@@ -1348,6 +1348,9 @@
                         // Сначала загружаем категории, затем товары
                         await fetchCategories();
                         await fetchProducts();
+                        if (!window.location.hash) {
+                            renderCategories('index');
+                        }
                         
                         // После загрузки данных проверяем хеш и показываем соответствующий контент
                         checkHashAndShowProduct();
@@ -1406,7 +1409,7 @@
             }
             
             // Показываем главную страницу с категориями
-            showCategory('index');
+            renderCategories('index');
         }
 // Добавить функцию для дебага (можно удалить после проверки)
 function debugProductLoad() {
