@@ -916,8 +916,7 @@
         <!-- Обычная навигация для десктопа -->
         <div class="header-top__navigation">
             <div class="header-top__home" onclick="goToHome()">Головна</div>
-            <div class="header-top__about">Про нас</div>
-            <div class="header-top__contact-us">Контакти</div>
+          
         </div>
         
         <div class="header-top__icons">
@@ -1177,6 +1176,7 @@
             }
         }
 
+        
         // Отрендерить навигацию на основе загруженных страниц
         function renderNavigation() {
             const navigationContainer = document.querySelector('.header-top__navigation');
@@ -1195,7 +1195,7 @@
                 if (pageId && pageTitle) {
                     const pageElement = document.createElement('div');
                     pageElement.className = 'header-top__page';
-                    pageElement.textContent = pageTitle;
+                    pageElement.textContent = pageTitle; // Используем pageTitle из столбца B
                     pageElement.onclick = () => showPage(pageId, pageTitle);
                     navigationContainer.appendChild(pageElement);
                 }
