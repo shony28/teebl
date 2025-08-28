@@ -8,9 +8,124 @@
         @import url('https://fonts.googleapis.com/css2?family=Material+Icons+Outlined');
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap');
 
+        /* Цветовые схемы */
+:root {
+    /* Default схема */
+    --primary-color: #007bff;
+    --primary-hover: #0056b3;
+    --secondary-color: #333333;
+    --secondary-hover: #131d29;
+    --accent-color: #012a57;
+    --background-color: #f9f9f9;
+    --card-background: #ffffff;
+    --text-color: #000000;
+    --text-secondary: #555;
+    --text-muted: #666;
+    --border-color: #ddd;
+    --success-color: #28a745;
+    --success-hover: #218838;
+    --danger-color: #dc3545;
+    --search-background: #f5f5f5;
+}
+
+/* Blue Professional схема */
+[data-theme="blue"] {
+    --primary-color: #0d47a1;
+    --primary-hover: #1976d2;
+    --secondary-color: #1e3a8a;
+    --secondary-hover: #1e40af;
+    --accent-color: #0f172a;
+    --background-color: #f1f5f9;
+    --card-background: #ffffff;
+    --text-color: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+    --success-color: #059669;
+    --success-hover: #047857;
+    --danger-color: #dc2626;
+    --search-background: #e2e8f0;
+}
+
+/* Green Nature схема */
+[data-theme="green"] {
+    --primary-color: #16a34a;
+    --primary-hover: #15803d;
+    --secondary-color: #166534;
+    --secondary-hover: #14532d;
+    --accent-color: #052e16;
+    --background-color: #f0fdf4;
+    --card-background: #ffffff;
+    --text-color: #052e16;
+    --text-secondary: #365314;
+    --text-muted: #4d7c0f;
+    --border-color: #bbf7d0;
+    --success-color: #22c55e;
+    --success-hover: #16a34a;
+    --danger-color: #ef4444;
+    --search-background: #dcfce7;
+}
+
+/* Purple Modern схема */
+[data-theme="purple"] {
+    --primary-color: #7c3aed;
+    --primary-hover: #6d28d9;
+    --secondary-color: #5b21b6;
+    --secondary-hover: #4c1d95;
+    --accent-color: #2d1b69;
+    --background-color: #faf5ff;
+    --card-background: #ffffff;
+    --text-color: #2d1b69;
+    --text-secondary: #6b21a8;
+    --text-muted: #7c2d98;
+    --border-color: #d8b4fe;
+    --success-color: #10b981;
+    --success-hover: #059669;
+    --danger-color: #f59e0b;
+    --search-background: #ede9fe;
+}
+
+/* Dark схема */
+[data-theme="dark"] {
+    --primary-color: #3b82f6;
+    --primary-hover: #2563eb;
+    --secondary-color: #4b5563;
+    --secondary-hover: #374151;
+    --accent-color: #1f2937;
+    --background-color: #111827;
+    --card-background: #1f2937;
+    --text-color: #f9fafb;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-color: #374151;
+    --success-color: #10b981;
+    --success-hover: #059669;
+    --danger-color: #ef4444;
+    --search-background: #374151;
+}
+
+/* Red Energy схема */
+[data-theme="red"] {
+    --primary-color: #dc2626;
+    --primary-hover: #b91c1c;
+    --secondary-color: #991b1b;
+    --secondary-hover: #7f1d1d;
+    --accent-color: #450a0a;
+    --background-color: #fef2f2;
+    --card-background: #ffffff;
+    --text-color: #450a0a;
+    --text-secondary: #7f1d1d;
+    --text-muted: #991b1b;
+    --border-color: #fecaca;
+    --success-color: #059669;
+    --success-hover: #047857;
+    --danger-color: #dc2626;
+    --search-background: #fee2e2;
+}
+
         body {
             font-family: 'Arial', sans-serif;
-            background: #f9f9f9;
+            background: var(--background-color);
             margin: 0;
             padding: 0;
         }
@@ -18,12 +133,12 @@
 
  
         .product {
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             margin: 0; /* убираем margin, так как используем gap */
             padding: 10px;
             width: calc(100% - 40px);
             max-width: 240px;
-            background-color: #fff;
+            background-color: var(--border-color);
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             transition: transform .1s;
         }
@@ -58,7 +173,7 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 10px;
-            padding: 1px;
+            padding-top: 7px;
         }
 
         .product p.description {
@@ -77,7 +192,7 @@
 
         .product button {
             padding: 10px 20px;
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
             border: none;
             cursor: pointer;
@@ -85,7 +200,7 @@
         }
 
         .product button:hover {
-            background-color: #0056b3;
+            background-color: var(--primary-hover);
         }
 
         .header-top,
@@ -134,7 +249,7 @@
         }
 
         .header-top__search-field {
-            background: #f5f5f5;
+            background: var(--search-background);
             border-radius: 8px;
             padding: 16px;
             display: flex;
@@ -431,7 +546,7 @@
 
         #place-order {
             padding: 12px 24px;
-            background-color: #28a745;
+            background-color: var(--success-color);
             color: white;
             font-size: 1.1em;
             border: none;
@@ -442,17 +557,18 @@
         }
 
         #place-order:hover {
-            background-color: #218838;
+            background-color: var(--success-hover);
         }
 
         .form-group {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px;
+            margin-top: 5px;
             box-sizing: border-box;
             border: 1px solid #ccc;
         }
@@ -764,7 +880,7 @@
         .product-price {
             font-size: 24px;
             font-weight: bold;
-            color: #012a57;
+            color: var(--accent-color);
         }
 
         .product-actions {
@@ -784,7 +900,7 @@
 
         .product-actions button {
             padding: 12px 24px;
-            background: #333333;
+            background: var(--secondary-color);
             color: white;
             border: none;
             border-radius: 4px;
@@ -794,7 +910,7 @@
         }
 
         .product-actions button:hover {
-            background: #131d29;
+            background: var(--secondary-hover);
         }
 
         @media (max-width: 768px) {
@@ -1066,7 +1182,6 @@
         function applySettings() {
             // Применение текста для кнопки добавления в корзину
             if (settingsData.buttonAddToCartName) {
-                // Обновляем все кнопки добавления товаров в корзину
                 const addButtons = document.querySelectorAll('.quantity-and-button button, #page-add-button');
                 addButtons.forEach(button => {
                     button.textContent = settingsData.buttonAddToCartName;
@@ -1075,10 +1190,17 @@
                 console.log('Застосовано текст кнопки:', settingsData.buttonAddToCartName);
             }
             
-            // Здесь можно добавить применение других настроек в будущем
-            // например:
-            // if (settingsData.siteName) { ... }
-            // if (settingsData.primaryColor) { ... }
+            // Применение цветовой схемы
+            if (settingsData.styleColor) {
+                const theme = settingsData.styleColor.toLowerCase();
+                if (theme === 'default') {
+                    document.body.removeAttribute('data-theme');
+                } else {
+                    document.body.setAttribute('data-theme', theme);
+                }
+                
+                console.log('Застосовано цветову схему:', settingsData.styleColor);
+            }
         }
 
         async function fetchProducts() {
