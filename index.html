@@ -1195,7 +1195,7 @@
                 if (pageId && pageTitle) {
                     const pageElement = document.createElement('div');
                     pageElement.className = 'header-top__page';
-                    pageElement.textContent = pageTitle; // Используем pageTitle из столбца B
+                    pageElement.textContent = pageId; // Используем pageId из столбца A
                     pageElement.onclick = () => showPage(pageId, pageTitle);
                     navigationContainer.appendChild(pageElement);
                 }
