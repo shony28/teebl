@@ -1200,6 +1200,47 @@
                     navigationContainer.appendChild(pageElement);
                 }
             });
+            
+            // Обновляем мобильное меню
+            renderMobileNavigation();
+        }
+
+        // Отрендерить мобильное меню
+        function renderMobileNavigation() {
+            const mobileNav = document.getElementById('mobile-nav');
+            
+            if (!mobileNav) {
+                console.error('Мобільне меню не знайдено');
+                return;
+            }
+            
+            // Очищаем мобильное меню
+            mobileNav.innerHTML = '';
+            
+            // Добавляем "Головна"
+            const homeItem = document.createElement('div');
+            homeItem.className = 'mobile-nav-item';
+            homeItem.textContent = 'Головна';
+            homeItem.onclick = () => {
+                goToHome();
+                closeMobileNav();
+            };
+            mobileNav.appendChild(homeItem);
+            
+            // Добавляем страницы из листа
+            allPages.forEach(page => {
+                const [pageId, pageTitle] = page;
+                if (pageId && pageTitle) {
+                    const pageItem = document.createElement('div');
+                    pageItem.className = 'mobile-nav-item';
+                    pageItem.textContent = pageId;
+                    pageItem.onclick = () => {
+                        showPage(pageId, pageTitle);
+                        closeMobileNav();
+                    };
+                    mobileNav.appendChild(pageItem);
+                }
+            });
         }
 
         // Отрендерить навигацию по умолчанию при ошибке загрузки
@@ -1215,6 +1256,16 @@
                 <div class="header-top__about">Про нас</div>
                 <div class="header-top__contact-us">Контакти</div>
             `;
+            
+            // Обновляем мобильное меню по умолчанию
+            const mobileNav = document.getElementById('mobile-nav');
+            if (mobileNav) {
+                mobileNav.innerHTML = `
+                    <div class="mobile-nav-item" onclick="goToHome(); closeMobileNav()">Головна</div>
+                    <div class="mobile-nav-item" onclick="closeMobileNav()">Про нас</div>
+                    <div class="mobile-nav-item" onclick="closeMobileNav()">Контакти</div>
+                `;
+            }
         }
 
         // Показать страницу
