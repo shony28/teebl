@@ -16,16 +16,16 @@
     --secondary-color: #333333;
     --secondary-hover: #131d29;
     --accent-color: #012a57;
-    --background-color: #f9f9f9;
+    
     --card-background: #ffffff;
     --text-color: #000000;
     --text-secondary: #555;
     --text-muted: #666;
-    --border-color: #ddd;
+    
     --success-color: #28a745;
     --success-hover: #218838;
     --danger-color: #dc3545;
-    --search-background: #f5f5f5;
+    
 }
 
 /* Blue Professional схема */
@@ -35,16 +35,16 @@
     --secondary-color: #1e3a8a;
     --secondary-hover: #1e40af;
     --accent-color: #0f172a;
-    --background-color: #f1f5f9;
+    
     --card-background: #ffffff;
     --text-color: #0f172a;
     --text-secondary: #475569;
     --text-muted: #64748b;
-    --border-color: #cbd5e1;
+    
     --success-color: #059669;
     --success-hover: #047857;
     --danger-color: #dc2626;
-    --search-background: #e2e8f0;
+    
 }
 
 /* Green Nature схема */
@@ -54,78 +54,27 @@
     --secondary-color: #166534;
     --secondary-hover: #14532d;
     --accent-color: #052e16;
-    --background-color: #f0fdf4;
+    
     --card-background: #ffffff;
     --text-color: #052e16;
     --text-secondary: #365314;
     --text-muted: #4d7c0f;
-    --border-color: #bbf7d0;
+    
     --success-color: #22c55e;
     --success-hover: #16a34a;
     --danger-color: #ef4444;
-    --search-background: #dcfce7;
+    
 }
 
-/* Purple Modern схема */
-[data-theme="purple"] {
-    --primary-color: #7c3aed;
-    --primary-hover: #6d28d9;
-    --secondary-color: #5b21b6;
-    --secondary-hover: #4c1d95;
-    --accent-color: #2d1b69;
-    --background-color: #faf5ff;
-    --card-background: #ffffff;
-    --text-color: #2d1b69;
-    --text-secondary: #6b21a8;
-    --text-muted: #7c2d98;
-    --border-color: #d8b4fe;
-    --success-color: #10b981;
-    --success-hover: #059669;
-    --danger-color: #f59e0b;
-    --search-background: #ede9fe;
-}
 
-/* Dark схема */
-[data-theme="dark"] {
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --secondary-color: #4b5563;
-    --secondary-hover: #374151;
-    --accent-color: #1f2937;
-    --background-color: #111827;
-    --card-background: #1f2937;
-    --text-color: #f9fafb;
-    --text-secondary: #d1d5db;
-    --text-muted: #9ca3af;
-    --border-color: #374151;
-    --success-color: #10b981;
-    --success-hover: #059669;
-    --danger-color: #ef4444;
-    --search-background: #374151;
-}
 
-/* Red Energy схема */
-[data-theme="red"] {
-    --primary-color: #dc2626;
-    --primary-hover: #b91c1c;
-    --secondary-color: #991b1b;
-    --secondary-hover: #7f1d1d;
-    --accent-color: #450a0a;
-    --background-color: #fef2f2;
-    --card-background: #ffffff;
-    --text-color: #450a0a;
-    --text-secondary: #7f1d1d;
-    --text-muted: #991b1b;
-    --border-color: #fecaca;
-    --success-color: #059669;
-    --success-hover: #047857;
-    --danger-color: #dc2626;
-    --search-background: #fee2e2;
-}
+
+
+
 
         body {
             font-family: 'Arial', sans-serif;
-            background: var(--background-color);
+            background: #f9f9f9;
             margin: 0;
             padding: 0;
         }
@@ -133,7 +82,7 @@
 
  
         .product {
-            border: 1px solid var(--border-color);
+            border: 1px solid #ddd;
             margin: 0; /* убираем margin, так как используем gap */
             padding: 10px;
             width: calc(100% - 40px);
@@ -249,7 +198,7 @@
         }
 
         .header-top__search-field {
-            background: var(--search-background);
+            background: #f5f5f5;
             border-radius: 8px;
             padding: 16px;
             display: flex;
