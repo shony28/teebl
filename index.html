@@ -948,12 +948,16 @@
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         const TELEGRAM_CHAT_ID = '459773195';
         const CATEGORIES_RANGE = 'category!A2:D';
+        const SETTINGS_SHEET_NAME = 'settings';
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 2000;
         let allCategories = [];
         let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
         let isCartVisible = false;
         let isMobileNavVisible = false;
         let allProducts = [];
+        let settingsData = {};
 
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
@@ -962,6 +966,119 @@
             if (!results) return null;
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        // Функция для выполнения fetch с повторными попытками
+        async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                    return await response.text();
+                } catch (error) {
+                    console.warn(`Спроба ${i + 1} не вдалася:`, error);
+                    if (i < retries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        throw error;
+                    }
+                }
+            }
+        }
+
+        // Сохранение данных в localStorage
+        function cacheSettingsData(data) {
+            try {
+                localStorage.setItem('settingsData', JSON.stringify(data));
+            } catch (e) {
+                console.warn('Не вдалося зберегти налаштування в localStorage:', e);
+            }
+        }
+
+        // Получение данных из localStorage
+        function getCachedSettingsData() {
+            try {
+                const data = localStorage.getItem('settingsData');
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.warn('Не вдалося отримати налаштування з localStorage:', e);
+                return null;
+            }
+        }
+
+        // Загрузка настроек с листа "settings"
+        async function loadSettings() {
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+            
+            if (!spreadsheetId) {
+                console.error('SPREADSHEET_ID не визначено');
+                return;
+            }
+            
+            try {
+                console.log('Завантаження налаштувань...');
+                const targetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?sheet=${SETTINGS_SHEET_NAME}&range=A:C&tqx=out:json`;
+                const text = await fetchWithRetry(targetUrl);
+
+                let jsonText = text.trim();
+                if (jsonText.startsWith('/*O_o*/\ngoogle.visualization.Query.setResponse(')) {
+                    jsonText = jsonText.substring(47);
+                    jsonText = jsonText.substring(0, jsonText.length - 2);
+                }
+
+                const jsonData = JSON.parse(jsonText);
+                if (!jsonData.table || !jsonData.table.rows) {
+                    console.warn('Лист налаштувань порожній або відсутній');
+                    return;
+                }
+
+                const rows = jsonData.table.rows;
+                settingsData = {};
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (row.c && row.c.length >= 3) {
+                        const settingName = row.c[0] ? (row.c[0].v || '') : '';
+                        const settingValue = row.c[2] ? (row.c[2].v || '') : '';
+                        if (settingName && settingValue !== '') {
+                            settingsData[settingName.toString()] = settingValue.toString();
+                        }
+                    }
+                }
+
+                console.log('Налаштування завантажено:', settingsData);
+                cacheSettingsData(settingsData);
+                applySettings();
+            } catch (error) {
+                console.error('Помилка завантаження налаштувань:', error);
+                const cachedSettings = getCachedSettingsData();
+                if (cachedSettings) {
+                    console.log('Використовую кешовані налаштування:', cachedSettings);
+                    settingsData = cachedSettings;
+                    applySettings();
+                } else {
+                    console.warn('Немає кешованих налаштувань, використовую значення за замовчуванням');
+                }
+            }
+        }
+
+        // Применение настроек к интерфейсу
+        function applySettings() {
+            // Применение текста для кнопки добавления в корзину
+            if (settingsData.buttonAddToCartName) {
+                // Обновляем все кнопки добавления товаров в корзину
+                const addButtons = document.querySelectorAll('.quantity-and-button button, #page-add-button');
+                addButtons.forEach(button => {
+                    button.textContent = settingsData.buttonAddToCartName;
+                });
+                
+                console.log('Застосовано текст кнопки:', settingsData.buttonAddToCartName);
+            }
+            
+            // Здесь можно добавить применение других настроек в будущем
+            // например:
+            // if (settingsData.siteName) { ... }
+            // if (settingsData.primaryColor) { ... }
         }
 
         async function fetchProducts() {
@@ -973,6 +1090,9 @@
             }
             
             try {
+                // Загружаем настройки в начале
+                await loadSettings();
+                
                 // Загружаем товары
                 const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F`;
                 const productsResponse = await fetch(productsUrl);
@@ -1185,6 +1305,9 @@
                     productElement.style.cursor = 'pointer';
                     productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
                     
+                    // Получаем текст кнопки из настроек или используем значение по умолчанию
+                    const buttonText = settingsData.buttonAddToCartName || 'Додати';
+                    
                     productElement.innerHTML = `
                         <img src="${imageUrl}" alt="${name}" loading="lazy">
                         <h2>${name}</h2>
@@ -1192,7 +1315,7 @@
                         <p class="price">${price} грн</p>
                         <div class="quantity-and-button">
                             <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
-                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">Додати</button>
+                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
                         </div>
                     `;
                     productsContainer.appendChild(productElement);
@@ -1220,34 +1343,39 @@
             }
 
                 // функции для работы со страницей товара
-        function showProductPage(id, name, description, price, imageUrl) {
-            // Обновляем URL с хешем
-            window.history.pushState({productId: id}, '', `#${id}`);
-            
-            // Заполняем данные страницы товара
-            document.getElementById('page-image').src = imageUrl;
-            document.getElementById('page-image').alt = name;
-            document.getElementById('page-title').textContent = name;
-            document.getElementById('page-article').textContent = `Артикул: ${id}`;
-            document.getElementById('page-description').textContent = description;
-            document.getElementById('page-price').textContent = `${price} грн`;
-            
-            // Устанавливаем обработчик для кнопки добавления
-            const addButton = document.getElementById('page-add-button');
-            addButton.onclick = () => {
-                const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
-                const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
-                quantityInput.value = quantity;
-                addToCart(id, name, price);
-            };
-            
-            // Показываем страницу товара и скрываем список товаров
-            document.getElementById('products').classList.add('hidden');
-            document.getElementById('product-page').classList.add('active');
-            
-            // Прокручиваем к началу страницы
-            window.scrollTo(0, 0);
-        }
+            function showProductPage(id, name, description, price, imageUrl) {
+                // Обновляем URL с хешем
+                window.history.pushState({productId: id}, '', `#${id}`);
+                
+                // Заполняем данные страницы товара
+                document.getElementById('page-image').src = imageUrl;
+                document.getElementById('page-image').alt = name;
+                document.getElementById('page-title').textContent = name;
+                document.getElementById('page-article').textContent = `Артикул: ${id}`;
+                document.getElementById('page-description').textContent = description;
+                document.getElementById('page-price').textContent = `${price} грн`;
+                
+                // Устанавливаем обработчик для кнопки добавления и применяем настройки
+                const addButton = document.getElementById('page-add-button');
+                addButton.onclick = () => {
+                    const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
+                    const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
+                    quantityInput.value = quantity;
+                    addToCart(id, name, price);
+                };
+                
+                // Применяем текст кнопки из настроек
+                if (settingsData.buttonAddToCartName) {
+                    addButton.textContent = settingsData.buttonAddToCartName;
+                }
+                
+                // Показываем страницу товара и скрываем список товаров
+                document.getElementById('products').classList.add('hidden');
+                document.getElementById('product-page').classList.add('active');
+                
+                // Прокручиваем к началу страницы
+                window.scrollTo(0, 0);
+            }
 
         function showProductsList() {
             // Убираем хеш из URL
