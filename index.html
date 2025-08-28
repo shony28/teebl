@@ -837,7 +837,7 @@
 </head>
 <body>
     <div class="header-top">
-        <div class="header-top__logo">
+        <div class="header-top__logo" onclick="goToHome()">
             <img class="header-top__logo2" src="logo.png" alt="Logo" />
         </div>
         
@@ -850,7 +850,7 @@
         
         <!-- Обычная навигация для десктопа -->
         <div class="header-top__navigation">
-            <div class="header-top__home">Головна</div>
+            <div class="header-top__home" onclick="goToHome()">Головна</div>
             <div class="header-top__about">Про нас</div>
             <div class="header-top__contact-us">Контакти</div>
         </div>
@@ -878,7 +878,7 @@
     <!-- Мобильная навигация -->
     <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
     <div class="mobile-nav" id="mobile-nav">
-        <div class="mobile-nav-item" onclick="closeMobileNav()">Головна</div>
+        <div class="mobile-nav-item" onclick="goToHome(); closeMobileNav()">Головна</div>
         <div class="mobile-nav-item" onclick="closeMobileNav()">Про нас</div>
         <div class="mobile-nav-item" onclick="closeMobileNav()">Контакти</div>
     </div>
@@ -1199,6 +1199,24 @@
                 });
                 
                 targetContainer.appendChild(productsContainer);
+            }
+
+            function goToHome() {
+                // Убираем хеш из URL
+                window.history.pushState({}, '', window.location.pathname + window.location.search);
+                
+                // Сбрасываем поиск если есть
+                document.getElementById('search').value = '';
+                toggleResetButton();
+                
+                // Показываем главную страницу с категориями
+                showMainCategories();
+                
+                // Скрываем страницу товара если она открыта
+                document.getElementById('product-page').classList.remove('active');
+                
+                // Прокручиваем к началу страницы
+                window.scrollTo(0, 0);
             }
 
                 // функции для работы со страницей товара
