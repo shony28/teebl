@@ -289,6 +289,54 @@
             position: relative;
         }
 
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            font-size: inherit;
+            color: inherit;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-content .header-top__page {
+            padding: 10px 16px;
+            display: block;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+
+        .dropdown-content .header-top__page:hover {
+            background-color: #f5f5f5;
+        }
+
+        .dropdown-content .header-top__page:last-child {
+            border-bottom: none;
+        }
+
         .header-top__home,
         .header-top__about,
         .header-top__contact-us,
@@ -943,8 +991,7 @@
     <div class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
     <div class="mobile-nav" id="mobile-nav">
         <div class="mobile-nav-item" onclick="goToHome(); closeMobileNav()">Головна</div>
-        <div class="mobile-nav-item" onclick="closeMobileNav()">Про нас</div>
-        <div class="mobile-nav-item" onclick="closeMobileNav()">Контакти</div>
+
     </div>
 
     <div id="products"></div>
@@ -1186,24 +1233,84 @@
                 return;
             }
             
-            // Очищаем текущую навигацию (кроме "Головна")
+            // Очищаем текущую навигацию
             navigationContainer.innerHTML = '<div class="header-top__home" onclick="goToHome()">Головна</div>';
             
-            // Добавляем страницы из листа
-            allPages.forEach(page => {
+            // Максимальное количество видимых пунктов (включая "Головна")
+            const maxVisibleItems = 3;
+            const visiblePages = allPages.slice(0, maxVisibleItems - 1); // -1 для "Головна"
+            const hiddenPages = allPages.slice(maxVisibleItems - 1);
+            
+            // Добавляем видимые страницы
+            visiblePages.forEach(page => {
                 const [pageId, pageTitle] = page;
                 if (pageId && pageTitle) {
                     const pageElement = document.createElement('div');
                     pageElement.className = 'header-top__page';
-                    pageElement.textContent = pageId; // Используем pageId из столбца A
+                    pageElement.textContent = pageId;
                     pageElement.onclick = () => showPage(pageId, pageTitle);
                     navigationContainer.appendChild(pageElement);
                 }
             });
             
-            // Обновляем мобильное меню
+            // Если есть скрытые страницы, добавляем выпадающий список
+            if (hiddenPages.length > 0) {
+                const dropdown = document.createElement('div');
+                dropdown.className = 'dropdown';
+                
+                const dropdownToggle = document.createElement('button');
+                dropdownToggle.className = 'dropdown-toggle';
+                dropdownToggle.textContent = '•••';
+                dropdownToggle.onclick = toggleDropdown;
+                
+                const dropdownContent = document.createElement('div');
+                dropdownContent.className = 'dropdown-content';
+                dropdownContent.id = 'dropdown-content';
+                
+                hiddenPages.forEach(page => {
+                    const [pageId, pageTitle] = page;
+                    if (pageId && pageTitle) {
+                        const pageElement = document.createElement('div');
+                        pageElement.className = 'header-top__page';
+                        pageElement.textContent = pageId;
+                        pageElement.onclick = () => {
+                            showPage(pageId, pageTitle);
+                            closeDropdown();
+                        };
+                        dropdownContent.appendChild(pageElement);
+                    }
+                });
+                
+                dropdown.appendChild(dropdownToggle);
+                dropdown.appendChild(dropdownContent);
+                navigationContainer.appendChild(dropdown);
+            }
+            
+            // Обновляем мобильное меню (без изменений)
             renderMobileNavigation();
         }
+
+        function toggleDropdown() {
+            const dropdownContent = document.getElementById('dropdown-content');
+            if (dropdownContent) {
+                dropdownContent.classList.toggle('show');
+            }
+        }
+
+        function closeDropdown() {
+            const dropdownContent = document.getElementById('dropdown-content');
+            if (dropdownContent) {
+                dropdownContent.classList.remove('show');
+            }
+        }
+
+        // Закрытие выпадающего списка при клике вне его
+        document.addEventListener('click', function(event) {
+            if (!event.target.matches('.dropdown-toggle')) {
+                closeDropdown();
+            }
+        });
+        
 
         // Отрендерить мобильное меню
         function renderMobileNavigation() {
