@@ -9,62 +9,62 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500&display=swap');
 
         /* Цветовые схемы */
-:root {
-    /* Default схема */
-    --primary-color: #007bff;
-    --primary-hover: #0056b3;
-    --secondary-color: #333333;
-    --secondary-hover: #131d29;
-    --accent-color: #012a57;
-    
-    --card-background: #ffffff;
-    --text-color: #000000;
-    --text-secondary: #555;
-    --text-muted: #666;
-    
-    --success-color: #28a745;
-    --success-hover: #218838;
-    --danger-color: #dc3545;
-    
-}
+        :root {
+            /* Default схема */
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --secondary-color: #333333;
+            --secondary-hover: #131d29;
+            --accent-color: #012a57;
+            
+            --card-background: #ffffff;
+            --text-color: #000000;
+            --text-secondary: #555;
+            --text-muted: #666;
+            
+            --success-color: #28a745;
+            --success-hover: #218838;
+            --danger-color: #dc3545;
+            
+        }
 
-/* Blue Professional схема */
-[data-theme="blue"] {
-    --primary-color: #0d47a1;
-    --primary-hover: #1976d2;
-    --secondary-color: #1e3a8a;
-    --secondary-hover: #1e40af;
-    --accent-color: #0f172a;
-    
-    --card-background: #ffffff;
-    --text-color: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
-    
-    --success-color: #059669;
-    --success-hover: #047857;
-    --danger-color: #dc2626;
-    
-}
+        /* Blue Professional схема */
+        [data-theme="blue"] {
+            --primary-color: #0d47a1;
+            --primary-hover: #1976d2;
+            --secondary-color: #1e3a8a;
+            --secondary-hover: #1e40af;
+            --accent-color: #0f172a;
+            
+            --card-background: #ffffff;
+            --text-color: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            
+            --success-color: #059669;
+            --success-hover: #047857;
+            --danger-color: #dc2626;
+            
+        }
 
-/* Green Nature схема */
-[data-theme="green"] {
-    --primary-color: #16a34a;
-    --primary-hover: #15803d;
-    --secondary-color: #166534;
-    --secondary-hover: #14532d;
-    --accent-color: #052e16;
-    
-    --card-background: #ffffff;
-    --text-color: #052e16;
-    --text-secondary: #365314;
-    --text-muted: #4d7c0f;
-    
-    --success-color: #22c55e;
-    --success-hover: #16a34a;
-    --danger-color: #ef4444;
-    
-}
+        /* Green Nature схема */
+        [data-theme="green"] {
+            --primary-color: #16a34a;
+            --primary-hover: #15803d;
+            --secondary-color: #166534;
+            --secondary-hover: #14532d;
+            --accent-color: #052e16;
+            
+            --card-background: #ffffff;
+            --text-color: #052e16;
+            --text-secondary: #365314;
+            --text-muted: #4d7c0f;
+            
+            --success-color: #22c55e;
+            --success-hover: #16a34a;
+            --danger-color: #ef4444;
+            
+        }
 
 
 
@@ -1011,7 +1011,7 @@
         const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1a8iWHQ...'
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
-        const TELEGRAM_CHAT_ID = '459773195';
+        let TELEGRAM_CHAT_ID = '';
         const CATEGORIES_RANGE = 'category!A2:D';
         const SETTINGS_SHEET_NAME = 'settings';
         const MAX_RETRIES = 3;
@@ -1137,6 +1137,12 @@
                 });
                 
                 console.log('Застосовано текст кнопки:', settingsData.buttonAddToCartName);
+            }
+            
+            // Применение telegramChatId
+            if (settingsData.telegramChatId) {
+                TELEGRAM_CHAT_ID = settingsData.telegramChatId;
+                console.log('Застосовано Telegram Chat ID:', settingsData.telegramChatId);
             }
             
             // Применение цветовой схемы
