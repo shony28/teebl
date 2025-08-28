@@ -1719,8 +1719,8 @@
                     document.getElementById('delivery').value = '';
                     toggleCart();
                 } else {
-                    console.error('Ошибка Telegram API:', data);
-                    alert('Ошибка при отправке заказа в Telegram.');
+                    console.error('Помилка Telegram API:', data);
+                    alert('Помилка при відправці замовлення в Telegram.');
                 }
             })
             .catch(error => {
