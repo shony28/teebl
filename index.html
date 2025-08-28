@@ -464,9 +464,27 @@
         }
 
         .cart-header {
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
+        }
+
+        .cart-back-button {
+            position: absolute;
+            left: 0;
+            background: none;
+            border: none;
+            font-size: 16px;
+            color: #333;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .cart-back-button:hover {
+            background-color: #f0f0f0;
         }
 
         .cart-container {
@@ -502,7 +520,7 @@
         }
 
         .cart-button:hover {
-            background-color: #0056b3;
+            background-color: #061d35;
         }
 
         @media (min-width: 768px) {
@@ -891,6 +909,7 @@
 
     <div id="cart">
         <div class="cart-header">
+            <button class="cart-back-button" onclick="toggleCart()">← Назад</button>
             <h2>Кошик</h2>
         </div>
         <div class="cart-container">
