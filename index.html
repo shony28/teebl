@@ -1016,6 +1016,7 @@
         const SETTINGS_SHEET_NAME = 'settings';
         const MAX_RETRIES = 3;
         const RETRY_DELAY = 2000;
+        const PAGES_RANGE = 'pages!A2:B';
         let allCategories = [];
         let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
@@ -1023,6 +1024,8 @@
         let isMobileNavVisible = false;
         let allProducts = [];
         let settingsData = {};
+        let allPages = [];
+        let currentPageId = null;
 
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
@@ -1071,6 +1074,7 @@
             }
         }
 
+        
         // Загрузка настроек с листа "settings"
         async function loadSettings() {
             const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
@@ -1114,6 +1118,10 @@
                 console.log('Налаштування завантажено:', settingsData);
                 cacheSettingsData(settingsData);
                 applySettings();
+                
+                // Загружаем страницы после настроек
+                await loadPages();
+                
             } catch (error) {
                 console.error('Помилка завантаження налаштувань:', error);
                 const cachedSettings = getCachedSettingsData();
@@ -1121,10 +1129,128 @@
                     console.log('Використовую кешовані налаштування:', cachedSettings);
                     settingsData = cachedSettings;
                     applySettings();
+                    await loadPages();
                 } else {
                     console.warn('Немає кешованих налаштувань, використовую значення за замовчуванням');
                 }
             }
+        }
+
+        // Загрузка страниц с листа "pages"
+        async function loadPages() {
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+            
+            if (!spreadsheetId) {
+                console.error('SPREADSHEET_ID не визначено');
+                return;
+            }
+            
+            try {
+                console.log('Завантаження сторінок...');
+                const targetUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${PAGES_RANGE}`;
+                const text = await fetchWithRetry(targetUrl);
+                
+                let jsonText = text.trim();
+                if (jsonText.startsWith('/*O_o*/\ngoogle.visualization.Query.setResponse(')) {
+                    jsonText = jsonText.substring(47);
+                    jsonText = jsonText.substring(0, jsonText.length - 2);
+                }
+
+                const jsonData = JSON.parse(jsonText);
+                if (!jsonData.table || !jsonData.table.rows) {
+                    console.warn('Лист сторінок порожній або відсутній');
+                    return;
+                }
+
+                const rows = jsonData.table.rows;
+                allPages = rows.map(row => {
+                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+                });
+
+                console.log('Сторінки завантажено:', allPages);
+                renderNavigation();
+                
+            } catch (error) {
+                console.error('Помилка завантаження сторінок:', error);
+                // При ошибке показываем стандартное меню
+                renderDefaultNavigation();
+            }
+        }
+
+        // Отрендерить навигацию на основе загруженных страниц
+        function renderNavigation() {
+            const navigationContainer = document.querySelector('.header-top__navigation');
+            
+            if (!navigationContainer) {
+                console.error('Контейнер навігації не знайдено');
+                return;
+            }
+            
+            // Очищаем текущую навигацию (кроме "Головна")
+            navigationContainer.innerHTML = '<div class="header-top__home" onclick="goToHome()">Головна</div>';
+            
+            // Добавляем страницы из листа
+            allPages.forEach(page => {
+                const [pageId, pageTitle] = page;
+                if (pageId && pageTitle) {
+                    const pageElement = document.createElement('div');
+                    pageElement.className = 'header-top__page';
+                    pageElement.textContent = pageTitle;
+                    pageElement.onclick = () => showPage(pageId, pageTitle);
+                    navigationContainer.appendChild(pageElement);
+                }
+            });
+        }
+
+        // Отрендерить навигацию по умолчанию при ошибке загрузки
+        function renderDefaultNavigation() {
+            const navigationContainer = document.querySelector('.header-top__navigation');
+            
+            if (!navigationContainer) {
+                return;
+            }
+            
+            navigationContainer.innerHTML = `
+                <div class="header-top__home" onclick="goToHome()">Головна</div>
+                <div class="header-top__about">Про нас</div>
+                <div class="header-top__contact-us">Контакти</div>
+            `;
+        }
+
+        // Показать страницу
+        function showPage(pageId, pageTitle) {
+            currentPageId = pageId;
+            window.history.pushState({pageId: pageId}, '', `#page-${pageId}`);
+            
+            const productsContainer = document.getElementById('products');
+            productsContainer.innerHTML = '';
+            
+            // Добавить кнопку "Назад"
+            const backButton = document.createElement('button');
+            backButton.className = 'back-button';
+            backButton.textContent = '← Назад';
+            backButton.onclick = () => {
+                goToHome();
+            };
+            productsContainer.appendChild(backButton);
+            
+            // Заголовок страницы
+            const title = document.createElement('h1');
+            title.textContent = pageTitle;
+            title.style.cssText = 'text-align: center; margin: 20px 0; font-size: 28px; color: #333;';
+            productsContainer.appendChild(title);
+            
+            // Найти содержимое страницы
+            const pageData = allPages.find(p => p[0] === pageId);
+            if (pageData && pageData[1]) {
+                const content = document.createElement('div');
+                content.style.cssText = 'max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.6;';
+                content.innerHTML = pageData[1].replace(/\n/g, '<br>');
+                productsContainer.appendChild(content);
+            }
+            
+            document.getElementById('products').classList.remove('hidden');
+            document.getElementById('product-page').classList.remove('active');
         }
 
         // Применение настроек к интерфейсу
@@ -1779,37 +1905,47 @@
 
       //  функцию для проверки хеша и показа товара
         function checkHashAndShowProduct() {
-                const hash = window.location.hash.substring(1);
+            const hash = window.location.hash.substring(1);
+            
+            // Если данные еще не загрузились, ждем
+            if (allProducts.length === 0 || allCategories.length === 0) {
+                return;
+            }
+            
+            if (hash) {
+                // Проверяем, не страница ли это
+                if (hash.startsWith('page-')) {
+                    const pageId = hash.substring(5);
+                    const pageData = allPages.find(p => p[0] === pageId);
+                    if (pageData) {
+                        showPage(pageId, pageData[1] || pageId);
+                        return;
+                    }
+                }
                 
-                // Если данные еще не загрузились, ждем
-                if (allProducts.length === 0 || allCategories.length === 0) {
+                // Сначала проверяем, не товар ли это
+                const product = allProducts.find(p => p[0] === hash);
+                if (product) {
+                    const [id, name, description, price, imageUrl, tags] = product;
+                    showProductPage(id, name, description, price, imageUrl);
                     return;
                 }
                 
-                if (hash) {
-                    // Сначала проверяем, не товар ли это
-                    const product = allProducts.find(p => p[0] === hash);
-                    if (product) {
-                        const [id, name, description, price, imageUrl, tags] = product;
-                        showProductPage(id, name, description, price, imageUrl);
-                        return;
-                    }
-                    
-                    // Если не товар, проверяем категорию
-                    const category = allCategories.find(c => c[0] === hash);
-                    if (category) {
-                        showCategory(hash);
-                        return;
-                    }
-                    
-                    // Если ничего не найдено, убираем хеш и показываем главную
-                    console.log(`Ни товар, ни категория с ID ${hash} не найдены`);
-                    window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                // Если не товар, проверяем категорию
+                const category = allCategories.find(c => c[0] === hash);
+                if (category) {
+                    showCategory(hash);
+                    return;
                 }
                 
-                // По умолчанию показываем главную страницу с категориями
-                showMainCategories();
+                // Если ничего не найдено, убираем хеш и показываем главную
+                console.log(`Ни товар, ни категория с ID ${hash} не найдены`);
+                window.history.replaceState({}, '', window.location.pathname + window.location.search);
             }
+            
+            // По умолчанию показываем главную страницу с категориями
+            showMainCategories();
+        }
 
 
     </script>
