@@ -1694,7 +1694,7 @@
 
             const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
             const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            const message = `Ваш заказ:\n${orderDetails}\n\nИтоговая сумма: ${totalPrice} грн\n\nКонтактная информация:\nТелефон: ${phone}\nГород: ${city}\nСлужба доставки: ${delivery}`;
+            const message = `Ваше замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nМісто: ${city}\nСлужба доставки: ${delivery}`;
 
             const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
             fetch(telegramUrl, {
