@@ -1038,10 +1038,7 @@
                     <label for="delivery">Служба доставки</label>
                     <select id="delivery">
                         <option value="">Виберіть службу доставки</option>
-                        <option value="EMS">EMS</option>
-                        <option value="DHL">DHL</option>
-                        <option value="FedEx">FedEx</option>
-                        <option value="UPS">UPS</option>
+                        
                     </select>
                 </div>
                 <div class="order-summary">
@@ -1439,6 +1436,38 @@
                 }
                 
                 console.log('Застосовано цветову схему:', settingsData.styleColor);
+            }
+            
+            // Применение настроек для выпадающего списка доставки
+            if (settingsData.deliverySelect) {
+                const deliverySelect = document.getElementById('delivery');
+                if (deliverySelect) {
+                    // Очищаем текущие опции, кроме первой (placeholder)
+                    const firstOption = deliverySelect.querySelector('option[value=""]');
+                    deliverySelect.innerHTML = '';
+                    if (firstOption) {
+                        deliverySelect.appendChild(firstOption);
+                    } else {
+                        const placeholderOption = document.createElement('option');
+                        placeholderOption.value = '';
+                        placeholderOption.textContent = 'Виберіть службу доставки';
+                        deliverySelect.appendChild(placeholderOption);
+                    }
+                    
+                    // Разбиваем строку по символу ";" и создаем опции
+                    const deliveryOptions = settingsData.deliverySelect.split(';');
+                    deliveryOptions.forEach(optionText => {
+                        const trimmedText = optionText.trim();
+                        if (trimmedText) {
+                            const option = document.createElement('option');
+                            option.value = trimmedText;
+                            option.textContent = trimmedText;
+                            deliverySelect.appendChild(option);
+                        }
+                    });
+                    
+                    console.log('Застосовано налаштування доставки:', settingsData.deliverySelect);
+                }
             }
         }
 
