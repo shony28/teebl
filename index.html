@@ -987,7 +987,13 @@
             top: -5px;
             right: -5px;
         }
-
+        
+        .header-top__logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+        }
 
 
     </style>
@@ -1524,15 +1530,20 @@
                 }
             }
             
-            // Применение URL логотипа
-            const logoImg = document.querySelector('.header-top__logo2');
-            if (logoImg) {
+            // Применение логотипа (изображение или текст)
+            const logoContainer = document.querySelector('.header-top__logo');
+            if (logoContainer) {
                 if (settingsData.logoUrl) {
-                    logoImg.src = settingsData.logoUrl;
+                    // Если есть URL логотипа, показываем изображение
+                    logoContainer.innerHTML = `<img class="header-top__logo2" src="${settingsData.logoUrl}" alt="Logo" />`;
                     console.log('Застосовано URL логотипу:', settingsData.logoUrl);
+                } else if (settingsData.logoTitle) {
+                    // Если нет URL, но есть текст, показываем текст
+                    logoContainer.innerHTML = `<span class="header-top__logo-text">${settingsData.logoTitle}</span>`;
+                    console.log('Застосовано текст логотипу:', settingsData.logoTitle);
                 } else {
-                    // Если нет настройки logoUrl, используем logo.png по умолчанию
-                    logoImg.src = 'logo.png';
+                    // По умолчанию используем logo.png
+                    logoContainer.innerHTML = `<img class="header-top__logo2" src="logo.png" alt="Logo" />`;
                 }
             }
         }
