@@ -566,7 +566,7 @@
             margin-top: 5px;
             box-sizing: border-box;
             border: 1px solid #ccc;
-            font-size: 16px;
+            font-size: 18px;
         }
 
         .form-group input:focus,
@@ -1460,6 +1460,7 @@
             document.getElementById('product-page').classList.remove('active');
         }
 
+        
         // Применение настроек к интерфейсу
         function applySettings() {
             // Применение текста для кнопки добавления в корзину
@@ -1519,6 +1520,15 @@
                     });
                     
                     console.log('Застосовано налаштування доставки:', settingsData.deliverySelect);
+                }
+            }
+            
+            // Применение URL логотипа
+            if (settingsData.logoUrl) {
+                const logoImg = document.querySelector('.header-top__logo2');
+                if (logoImg) {
+                    logoImg.src = settingsData.logoUrl;
+                    console.log('Застосовано URL логотипу:', settingsData.logoUrl);
                 }
             }
         }
