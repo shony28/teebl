@@ -941,7 +941,40 @@
         }
 
 
+        /* Стили для плавающей корзины */
+        .floating-cart {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 50px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
 
+        .floating-cart.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .floating-cart .header-top__icon-32-px-cart {
+            position: relative;
+        }
+
+        .floating-cart #cart-count {
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 8px;
+            font-size: 12px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
 
 
 
@@ -992,6 +1025,14 @@
     <div class="mobile-nav" id="mobile-nav">
         <div class="mobile-nav-item" onclick="goToHome(); closeMobileNav()">Головна</div>
 
+    </div>
+
+    <!-- Плавающая корзина -->
+    <div class="floating-cart" id="floating-cart">
+        <div class="header-top__icon-32-px-cart" onclick="toggleCart()">
+            <img class="header-top__cart-1" src="cart-10.svg" alt="Cart" />
+            <div id="floating-cart-count">0</div>
+        </div>
     </div>
 
     <div id="products"></div>
@@ -1991,6 +2032,9 @@
             totalPriceElement.innerText = totalPrice.toFixed(2);
             totalQuantityElement.innerText = totalQuantity;
             document.getElementById('cart-count').innerText = totalQuantity;
+            
+            // Обновляем плавающую корзину
+            updateFloatingCartCount();
         }
 
         function toggleCart() {
@@ -2063,40 +2107,43 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-                loadCart();
-                
-                // Сначала загружаем товары (checkHashAndShowProduct вызовется в fetchProducts)
-                fetchProducts();
-                
-                // Обработчик изменения хеша
-                window.addEventListener('hashchange', checkHashAndShowProduct);
-                
-                // Обработчик кнопки "Назад" браузера
-                window.addEventListener('popstate', function(event) {
-                    if (event.state && event.state.productId) {
+            loadCart();
+            
+            // Сначала загружаем товары (checkHashAndShowProduct вызовется в fetchProducts)
+            fetchProducts();
+            
+            // Инициализируем отслеживание скролла
+            initScrollTracking();
+            
+            // Обработчик изменения хеша
+            window.addEventListener('hashchange', checkHashAndShowProduct);
+            
+            // Обработчик кнопки "Назад" браузера
+            window.addEventListener('popstate', function(event) {
+                if (event.state && event.state.productId) {
+                    checkHashAndShowProduct();
+                } else {
+                    // Проверяем хеш, возможно пользователь вручную изменил URL
+                    const hash = window.location.hash.substring(1);
+                    if (hash) {
                         checkHashAndShowProduct();
                     } else {
-                        // Проверяем хеш, возможно пользователь вручную изменил URL
-                        const hash = window.location.hash.substring(1);
-                        if (hash) {
-                            checkHashAndShowProduct();
-                        } else {
-                            showProductsList();
-                        }
+                        showProductsList();
                     }
-                });
-                
-                document.getElementById('search').addEventListener('input', function(e) {
-                    filterProducts();
-                });
-                
-                // Закрытие мобильного меню при клике вне его
-                document.addEventListener('click', function(e) {
-                    if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                        closeMobileNav();
-                    }
-                });
+                }
             });
+            
+            document.getElementById('search').addEventListener('input', function(e) {
+                filterProducts();
+            });
+            
+            // Закрытие мобильного меню при клике вне его
+            document.addEventListener('click', function(e) {
+                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                    closeMobileNav();
+                }
+            });
+        });
 
       //  функцию для проверки хеша и показа товара
         function checkHashAndShowProduct() {
@@ -2140,6 +2187,53 @@
             
             // По умолчанию показываем главную страницу с категориями
             showMainCategories();
+        }
+
+        // Функция для обновления счетчика плавающей корзины
+        function updateFloatingCartCount() {
+            const floatingCartCount = document.getElementById('floating-cart-count');
+            const mainCartCount = document.getElementById('cart-count');
+            if (floatingCartCount && mainCartCount) {
+                floatingCartCount.textContent = mainCartCount.textContent;
+            }
+        }
+
+        // Функция для проверки видимости хедера
+        function checkHeaderVisibility() {
+            const header = document.querySelector('.header-top');
+            const floatingCart = document.getElementById('floating-cart');
+            
+            if (!header || !floatingCart) return;
+            
+            const headerRect = header.getBoundingClientRect();
+            const isHeaderVisible = headerRect.bottom > 0;
+            
+            if (isHeaderVisible) {
+                floatingCart.classList.remove('visible');
+            } else {
+                floatingCart.classList.add('visible');
+            }
+        }
+
+        // Инициализация отслеживания скролла
+        function initScrollTracking() {
+            let ticking = false;
+            
+            function handleScroll() {
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        checkHeaderVisibility();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }
+            
+            window.addEventListener('scroll', handleScroll);
+            window.addEventListener('resize', checkHeaderVisibility);
+            
+            // Первоначальная проверка
+            checkHeaderVisibility();
         }
 
 
