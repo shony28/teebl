@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Path Params</title>
+</head>
+<body>
+  <h1>Path param test</h1>
+  <div id="output"></div>
+
+  <script>
+    // Берем часть пути после /
+    const path = window.location.pathname.replace(/^\/+/, ''); 
+
+    if (path) {
+      document.getElementById('output').textContent = "ID: " + path;
+    } else {
+      document.getElementById('output').textContent = "Нет ID в пути";
+    }
+  </script>
+</body>
+</html>
