@@ -2,21 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Test Path Params</title>
+  <title>Redirect</title>
+  <script>
+    // При заходе на /shpak -> перебрасываем на /index.html?path=/shpak
+    window.location.replace(
+      "/index.html?path=" + encodeURIComponent(window.location.pathname)
+    );
+  </script>
 </head>
 <body>
-  <h1>Path param test</h1>
-  <div id="output"></div>
-
-  <script>
-    // Берем часть пути после /
-    const path = window.location.pathname.replace(/^\/+/, ''); 
-
-    if (path) {
-      document.getElementById('output').textContent = "ID: " + path;
-    } else {
-      document.getElementById('output').textContent = "Нет ID в пути";
-    }
-  </script>
+  Redirecting...
 </body>
 </html>
