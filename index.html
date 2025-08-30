@@ -995,7 +995,7 @@
 <body>
     <div class="header-top">
         <div class="header-top__logo" onclick="goToHome()">
-            <img class="header-top__logo2" src="logo.png" alt="Logo" />
+            <img class="header-top__logo2" alt="Logo" />
         </div>
         
         <!-- Бургер меню кнопка -->
@@ -1461,6 +1461,7 @@
         }
 
         
+        
         // Применение настроек к интерфейсу
         function applySettings() {
             // Применение текста для кнопки добавления в корзину
@@ -1524,11 +1525,14 @@
             }
             
             // Применение URL логотипа
-            if (settingsData.logoUrl) {
-                const logoImg = document.querySelector('.header-top__logo2');
-                if (logoImg) {
+            const logoImg = document.querySelector('.header-top__logo2');
+            if (logoImg) {
+                if (settingsData.logoUrl) {
                     logoImg.src = settingsData.logoUrl;
                     console.log('Застосовано URL логотипу:', settingsData.logoUrl);
+                } else {
+                    // Если нет настройки logoUrl, используем logo.png по умолчанию
+                    logoImg.src = 'logo.png';
                 }
             }
         }
