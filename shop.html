@@ -2095,61 +2095,105 @@
         }
 
         function placeOrder() {
-            const phone = document.getElementById('phone').value.trim();
-            const buyer = document.getElementById('buyer').value.trim();
-            const delivery = document.getElementById('delivery').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const buyer = document.getElementById('buyer').value.trim();
+    const delivery = document.getElementById('delivery').value.trim();
 
-            if (cart.length === 0) {
-                alert("Кошик порожній!");
-                return;
+    if (cart.length === 0) {
+        alert("Кошик порожній!");
+        return;
+    }
+
+    if (!phone || !buyer || !delivery) {
+        alert("Будь ласка, заповніть усі поля для оформлення замовлення.");
+        return;
+    }
+
+    if (!validatePhone(phone)) {
+        alert("Неправильний формат телефону! Введіть номер у форматі +380XXXXXXXXX (10 цифр після +38)");
+        return;
+    }
+
+    const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
+    const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+    const totalQuantity = cart.reduce((total, item) => total + item.quantity, 0);
+    const message = `Ваше замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
+
+    // Отправка в Telegram (существующий код)
+    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const telegramPromise = fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+        }),
+    });
+
+    // Отправка в Google Форму
+    // ЗАМЕНИТЕ ЭТИ ЗНАЧЕНИЯ НА РЕАЛЬНЫЕ ПОСЛЕ СОЗДАНИЯ ФОРМЫ
+    const GOOGLE_FORM_ID = '1WQ94Zxuo6HcUB_teHzk-hD_cbB82aA-mT5FrvJj0npU'; // ID формы из Google Script
+    const GOOGLE_FORM_URL = `https://docs.google.com/forms/d/e/${GOOGLE_FORM_ID}/formResponse`;
+    
+    // Entry IDs полученные из Google Script
+    const ENTRY_IDS = {
+        phone: 'entry.1537973776',
+        name: 'entry.1966783596', 
+        delivery: 'entry.1317517905',
+        orderDetails: 'entry.1778554464',
+        totalPrice: 'entry.84460270',
+        totalQuantity: 'entry.508815709'
+    };
+
+    const formData = new FormData();
+    formData.append(ENTRY_IDS.phone, phone);
+    formData.append(ENTRY_IDS.name, buyer);
+    formData.append(ENTRY_IDS.delivery, delivery);
+    formData.append(ENTRY_IDS.orderDetails, orderDetails);
+    formData.append(ENTRY_IDS.totalPrice, totalPrice.toString());
+    formData.append(ENTRY_IDS.totalQuantity, totalQuantity.toString());
+
+    const googleFormPromise = fetch(GOOGLE_FORM_URL, {
+        method: 'POST',
+        body: formData,
+        mode: 'no-cors' // Важно для Google Forms
+    });
+
+    // Обрабатываем оба запроса
+    Promise.allSettled([telegramPromise, googleFormPromise])
+        .then(results => {
+            const telegramResult = results[0];
+            const googleFormResult = results[1];
+            
+            if (telegramResult.status === 'fulfilled') {
+                return telegramResult.value.json();
+            } else {
+                console.error('Ошибка Telegram:', telegramResult.reason);
+                throw new Error('Ошибка отправки в Telegram');
             }
-
-            if (!phone || !buyer || !delivery) {
-                alert("Будь ласка, заповніть усі поля для оформлення замовлення.");
-                return;
+        })
+        .then(telegramData => {
+            if (telegramData.ok) {
+                alert('Замовлення оформлено та збережено');
+                cart = [];
+                renderCart();
+                saveCart();
+                document.getElementById('phone').value = '';
+                document.getElementById('buyer').value = '';
+                document.getElementById('delivery').value = '';
+                toggleCart();
+            } else {
+                console.error('Помилка Telegram API:', telegramData);
+                alert('Помилка при відправці замовлення в Telegram.');
             }
-
-            if (!validatePhone(phone)) {
-                alert("Неправильний формат телефону! Введіть номер у форматі +380XXXXXXXXX (10 цифр після +38)");
-                return;
-            }
-
-            const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
-            const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            const message = `Ваше замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
-
-            const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            fetch(telegramUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    alert('Замовлення оформлено');
-                    cart = [];
-                    renderCart();
-                    saveCart();
-                    document.getElementById('phone').value = '';
-                    document.getElementById('buyer').value = '';
-                    document.getElementById('delivery').value = '';
-                    toggleCart();
-                } else {
-                    console.error('Помилка Telegram API:', data);
-                    alert('Помилка при відправці замовлення в Telegram.');
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка', error);
-                alert('Ошибка при отправке заказа.');
-            });
-        }
+        })
+        .catch(error => {
+            console.error('Ошибка при отправке заказа:', error);
+            alert('Ошибка при отправке заказа.');
+        });
+}
 
         function saveCart() {
             localStorage.setItem('cart', JSON.stringify(cart));
