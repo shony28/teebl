@@ -987,14 +987,22 @@
             top: -5px;
             right: -5px;
         }
-        
+
         .header-top__logo-text {
             font-size: 24px;
             font-weight: bold;
             color: #333;
             cursor: pointer;
+            margin: 10px 0px 0px 10px;
         }
 
+        .empty-cart-message {
+            text-align: center;
+            color: #999;
+            font-size: 18px;
+            margin: 40px 0;
+            opacity: 0.6;
+        }
 
     </style>
 </head>
@@ -1109,7 +1117,7 @@
         </div>
     </div>
     <script>
-        const SPREADSHEET_ID = null; // null для использования параметра или конкретный ID '1a8iWHQ...'
+        const SPREADSHEET_ID = null; // null для использования параметра ?id= или конкретный ID '1a8iWHQI57_3Z3eGJWmysiCSM_PVrD98roIUofae0GoI'
         const RANGE = 'goods!A2:E';
         const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94';
         let TELEGRAM_CHAT_ID = '';
@@ -2034,36 +2042,44 @@
             let totalQuantity = 0;
             let totalPrice = 0;
 
-            cart.forEach((item, index) => {
-                const cartItemElement = document.createElement('div');
-                cartItemElement.className = 'cart-item';
-                cartItemElement.innerHTML = `
-                    <span class="material-icons-outlined remove-item" onclick="removeFromCart('${item.id}')">close</span>
-                    <div class="details">
-                        <div class="info">
-                            <p>${item.name}</p>
+            if (cart.length === 0) {
+                // Показываем сообщение о пустой корзине
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'empty-cart-message';
+                emptyMessage.textContent = 'Кошик порожній';
+                cartContainer.appendChild(emptyMessage);
+            } else {
+                cart.forEach((item, index) => {
+                    const cartItemElement = document.createElement('div');
+                    cartItemElement.className = 'cart-item';
+                    cartItemElement.innerHTML = `
+                        <span class="material-icons-outlined remove-item" onclick="removeFromCart('${item.id}')">close</span>
+                        <div class="details">
+                            <div class="info">
+                                <p>${item.name}</p>
+                            </div>
+                            <div class="quantity-controls">
+                                <button onclick="decreaseQuantity('${item.id}')">-</button>
+                                <span>${item.quantity}</span>
+                                <button onclick="increaseQuantity('${item.id}')">+</button>
+                            </div>
+                            <p class="item-price">${item.price * item.quantity} грн</p>
                         </div>
-                        <div class="quantity-controls">
-                            <button onclick="decreaseQuantity('${item.id}')">-</button>
-                            <span>${item.quantity}</span>
-                            <button onclick="increaseQuantity('${item.id}')">+</button>
-                        </div>
-                        <p class="item-price">${item.price * item.quantity} грн</p>
-                    </div>
-                `;
-                cartContainer.appendChild(cartItemElement);
+                    `;
+                    cartContainer.appendChild(cartItemElement);
 
-                // Добавляем разделитель, если это не последний элемент
-                if (index < cart.length - 1) {
-                    const separator = document.createElement('div');
-                    separator.className = 'cart-separator';
-                    separator.style.cssText = 'height: 1px; background-color: #e0e0e0; margin: 10px 0;';
-                    cartContainer.appendChild(separator);
-                }
+                    // Добавляем разделитель, если это не последний элемент
+                    if (index < cart.length - 1) {
+                        const separator = document.createElement('div');
+                        separator.className = 'cart-separator';
+                        separator.style.cssText = 'height: 1px; background-color: #e0e0e0; margin: 10px 0;';
+                        cartContainer.appendChild(separator);
+                    }
 
-                totalQuantity += item.quantity;
-                totalPrice += item.price * item.quantity;
-            });
+                    totalQuantity += item.quantity;
+                    totalPrice += item.price * item.quantity;
+                });
+            }
 
             totalPriceElement.innerText = totalPrice.toFixed(2);
             totalQuantityElement.innerText = totalQuantity;
