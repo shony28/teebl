@@ -746,6 +746,9 @@
         }
 
         @media (max-width: 480px) {
+            img {
+                max-width: 100%;
+            }
             .header-top {
                 padding: 8px 10px;
             }
@@ -1423,8 +1426,7 @@
             
             navigationContainer.innerHTML = `
                 <div class="header-top__home" onclick="goToHome()">Головна</div>
-                <div class="header-top__about">Про нас</div>
-                <div class="header-top__contact-us">Контакти</div>
+                
             `;
             
             // Обновляем мобильное меню по умолчанию
