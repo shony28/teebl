@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>Клен етекетки</title>
+    <style>
+      @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
+      * {
+        -webkit-font-smoothing: antialiased;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0px;
+        height: 100%;
+      }
+      /* a blue color as a generic focus style */
+      button:focus-visible {
+        outline: 2px solid #4a90e2 !important;
+        outline: -webkit-focus-ring-color auto 5px !important;
+      }
+      a {
+        text-decoration: none;
+      }
+
+      .box {
+        position: relative;
+        width: 586px;
+        height: 189px;
+      }
+
+      .box .group {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 588px;
+        height: 189px;
+      }
+
+      .box .rectangle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 586px;
+        height: 189px;
+        background-color: #ffffff;
+        border: 1px solid;
+        border-color: #000000;
+      }
+
+      .box .lizhko-karolina-eko {
+        position: absolute;
+        top: 1px;
+        left: 426px;
+        width: 159px;
+        height: 119px;
+        aspect-ratio: 1.33;
+        object-fit: cover;
+      }
+
+      .box .logo-neutral-d {
+        position: absolute;
+        top: 7px;
+        left: 6px;
+        width: 37px;
+        height: 49px;
+        aspect-ratio: 0.75;
+      }
+
+      .box .frame {
+        display: flex;
+        flex-direction: column;
+        width: 235px;
+        align-items: center;
+        gap: 5px;
+        position: absolute;
+        top: 7px;
+        left: 120px;
+      }
+
+      .box .text-wrapper {
+        position: relative;
+        align-self: stretch;
+        margin-top: -1.00px;
+        font-family: "Inter-SemiBold", Helvetica;
+        font-weight: 600;
+        font-size: 24px;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .div {
+        align-self: stretch;
+        font-size: 16px;
+        text-align: center;
+        position: relative;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .vlastuvosti {
+        position: absolute;
+        top: 120px;
+        left: 408px;
+        width: 170px;
+        height: 63px;
+      }
+
+      .box .text-wrapper-2 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .text-wrapper-3 {
+        position: absolute;
+        top: 0;
+        left: 71px;
+        font-family: "Inter-SemiBold", Helvetica;
+        font-weight: 600;
+        color: #000000;
+        font-size: 10px;
+        letter-spacing: 0;
+        line-height: normal;
+        white-space: nowrap;
+      }
+
+      .box .text-wrapper-4 {
+        position: absolute;
+        top: 16px;
+        left: 0;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .text-wrapper-5 {
+        position: absolute;
+        top: 16px;
+        left: 71px;
+        font-family: "Inter-SemiBold", Helvetica;
+        font-weight: 600;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .text-wrapper-6 {
+        position: absolute;
+        top: 32px;
+        left: 0;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .text-wrapper-7 {
+        position: absolute;
+        top: 32px;
+        left: 71px;
+        font-family: "Inter-SemiBold", Helvetica;
+        font-weight: 600;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .perelik {
+        display: flex;
+        flex-direction: column;
+        width: 190px;
+        height: 91px;
+        align-items: flex-start;
+        gap: 1px;
+        position: absolute;
+        top: 92px;
+        left: 16px;
+      }
+
+      .box .frame-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(1, minmax(0, 1fr));
+        height: 12px;
+        gap: 1px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 190px;
+      }
+
+      .box .text-wrapper-8 {
+        position: relative;
+        grid-row: 1 / 2;
+        grid-column: 1 / 2;
+        width: 66px;
+        height: 12px;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .text-wrapper-9 {
+        grid-row: 1 / 2;
+        grid-column: 2 / 3;
+        justify-self: end;
+        width: 22px;
+        height: 12px;
+        font-size: 10px;
+        white-space: nowrap;
+        position: relative;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .frame-3 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(1, minmax(0, 1fr));
+        height: 13px;
+        gap: 1px;
+        position: absolute;
+        top: 13px;
+        left: 0;
+        width: 190px;
+      }
+
+      .box .text-wrapper-10 {
+        position: relative;
+        grid-row: 1 / 2;
+        grid-column: 1 / 2;
+        width: 36px;
+        height: 12px;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .frame-4 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(1, minmax(0, 1fr));
+        height: 12px;
+        gap: 1px;
+        position: absolute;
+        top: 27px;
+        left: 0;
+        width: 190px;
+      }
+
+      .box .text-wrapper-11 {
+        position: relative;
+        grid-row: 1 / 2;
+        grid-column: 1 / 2;
+        width: 133px;
+        height: 12px;
+        font-family: "Inter-Regular", Helvetica;
+        font-weight: 400;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+      .box .frame-5 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(1, minmax(0, 1fr));
+        height: 12px;
+        gap: 1px;
+        position: absolute;
+        top: 40px;
+        left: 0;
+        width: 190px;
+      }
+
+      .box .text-wrapper-12 {
+        position: absolute;
+        top: 77px;
+        left: 16px;
+        font-family: "Inter-SemiBold", Helvetica;
+        font-weight: 600;
+        font-size: 10px;
+        white-space: nowrap;
+        color: #000000;
+        letter-spacing: 0;
+        line-height: normal;
+      }
+
+
+    </style>
+
+  </head>
+  <body>
+    <div class="box">
+      <div class="group">
+        <div class="rectangle"></div>
+        <img class="lizhko-karolina-eko" src="img/lizhko-karolina-eko-1.png" />
+        <img class="logo-neutral-d" src="img/logo-neutral-d-1.png" />
+        <div class="frame">
+          <div class="text-wrapper">Ліжко Кароліна Еко</div>
+          <div class="div">120 х 200</div>
+        </div>
+        <div class="vlastuvosti">
+          <div class="text-wrapper-2">Колір:</div>
+          <div class="text-wrapper-3">Беж lw 06/1</div>
+          <div class="text-wrapper-4">Деревина:</div>
+          <div class="text-wrapper-5">Бук</div>
+          <div class="text-wrapper-6">Матеріал:</div>
+          <div class="text-wrapper-7">Зрощений/Цільний</div>
+        </div>
+        <div class="perelik">
+          <div class="frame-2">
+            <div class="text-wrapper-8">Бокова царга</div>
+            <div class="text-wrapper-9">2 шт</div>
+          </div>
+          <div class="frame-3">
+            <div class="text-wrapper-10">Спинка</div>
+            <div class="text-wrapper-9">2 шт</div>
+          </div>
+          <div class="frame-4">
+            <div class="text-wrapper-11">Рейка для ламелей бокова</div>
+            <div class="text-wrapper-9">2 шт</div>
+          </div>
+          <div class="frame-5">
+            <div class="text-wrapper-10">Спинка</div>
+            <div class="text-wrapper-9">2 шт</div>
+          </div>
+        </div>
+        <div class="text-wrapper-12">Перелік деталей:</div>
+      </div>
+    </div>
+  </body>
+</html>
