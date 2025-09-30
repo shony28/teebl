@@ -73,6 +73,27 @@
         cursor: not-allowed;
       }
 
+      .print-button {
+        padding: 12px 24px;
+        font-size: 16px;
+        background: #2e7d32;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 20px;
+        display: none;
+      }
+
+      .print-button:hover {
+        background: #1b5e20;
+      }
+
+      .print-button.visible {
+        display: inline-block;
+      }
+
       .message {
         padding: 10px;
         border-radius: 4px;
@@ -100,7 +121,8 @@
 
       .label-container {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
         margin-top: 20px;
       }
 
@@ -406,6 +428,28 @@
         letter-spacing: 0;
         line-height: normal;
       }
+
+      @media print {
+        body {
+          padding: 0;
+          margin: 0;
+        }
+
+        .search-container,
+        .print-button {
+          display: none !important;
+        }
+
+        .label-container {
+          margin: 0;
+          display: block;
+        }
+
+        .box {
+          display: block !important;
+          page-break-after: avoid;
+        }
+      }
     </style>
   </head>
   <body>
@@ -457,6 +501,7 @@
           <div class="text-wrapper-12">Перелік деталей:</div>
         </div>
       </div>
+      <button id="print-btn" class="print-button">🖨️ Друкувати етикетку</button>
     </div>
 
     <script>
@@ -469,6 +514,7 @@
       const searchBtn = document.getElementById('search-btn');
       const artikulInput = document.getElementById('artikul-input');
       const labelBox = document.getElementById('label-box');
+      const printBtn = document.getElementById('print-btn');
 
       function showMessage(text, type) {
         messageEl.textContent = text;
@@ -521,9 +567,11 @@
           updateLabel(foundRow);
           showMessage('Артикул знайдено!', 'success');
           labelBox.classList.add('visible');
+          printBtn.classList.add('visible');
         } else {
           showMessage('Артикул не знайдено в базі даних', 'error');
           labelBox.classList.remove('visible');
+          printBtn.classList.remove('visible');
         }
       }
 
@@ -544,6 +592,10 @@
         }
       }
 
+      function printLabel() {
+        window.print();
+      }
+
       searchBtn.addEventListener('click', () => {
         searchArtikul(artikulInput.value);
       });
@@ -553,6 +605,8 @@
           searchArtikul(artikulInput.value);
         }
       });
+
+      printBtn.addEventListener('click', printLabel);
 
       loadSheetData();
     </script>
