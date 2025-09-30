@@ -430,6 +430,11 @@
       }
 
       @media print {
+        @page {
+          margin: 0;
+          size: 586px 189px;
+        }
+
         body {
           padding: 0;
           margin: 0;
@@ -442,12 +447,14 @@
 
         .label-container {
           margin: 0;
+          padding: 0;
           display: block;
         }
 
         .box {
           display: block !important;
           page-break-after: avoid;
+          margin: 0;
         }
       }
     </style>
