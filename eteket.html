@@ -1,370 +1,359 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta charset="utf-8" />
-    <title>Клен етекетки</title>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор етикеток</title>
     <style>
-      @import url("https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css");
-      * {
-        -webkit-font-smoothing: antialiased;
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        margin: 0px;
-        height: 100%;
-      }
-      /* a blue color as a generic focus style */
-      button:focus-visible {
-        outline: 2px solid #4a90e2 !important;
-        outline: -webkit-focus-ring-color auto 5px !important;
-      }
-      a {
-        text-decoration: none;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      .box {
-        position: relative;
-        width: 586px;
-        height: 189px;
-      }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-      .box .group {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 588px;
-        height: 189px;
-      }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
 
-      .box .rectangle {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 586px;
-        height: 189px;
-        background-color: #ffffff;
-        border: 1px solid;
-        border-color: #000000;
-      }
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
 
-      .box .lizhko-karolina-eko {
-        position: absolute;
-        top: 1px;
-        left: 426px;
-        width: 159px;
-        height: 119px;
-        aspect-ratio: 1.33;
-        object-fit: cover;
-      }
+        .search-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
 
-      .box .logo-neutral-d {
-        position: absolute;
-        top: 7px;
-        left: 6px;
-        width: 37px;
-        height: 49px;
-        aspect-ratio: 0.75;
-      }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
 
-      .box .frame {
-        display: flex;
-        flex-direction: column;
-        width: 235px;
-        align-items: center;
-        gap: 5px;
-        position: absolute;
-        top: 7px;
-        left: 120px;
-      }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
 
-      .box .text-wrapper {
-        position: relative;
-        align-self: stretch;
-        margin-top: -1.00px;
-        font-family: "Inter-SemiBold", Helvetica;
-        font-weight: 600;
-        font-size: 24px;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
 
-      .box .div {
-        align-self: stretch;
-        font-size: 16px;
-        text-align: center;
-        position: relative;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
 
-      .box .vlastuvosti {
-        position: absolute;
-        top: 120px;
-        left: 408px;
-        width: 170px;
-        height: 63px;
-      }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
 
-      .box .text-wrapper-2 {
-        position: absolute;
-        top: 0;
-        left: 0;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        button:active {
+            transform: translateY(0);
+        }
 
-      .box .text-wrapper-3 {
-        position: absolute;
-        top: 0;
-        left: 71px;
-        font-family: "Inter-SemiBold", Helvetica;
-        font-weight: 600;
-        color: #000000;
-        font-size: 10px;
-        letter-spacing: 0;
-        line-height: normal;
-        white-space: nowrap;
-      }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
 
-      .box .text-wrapper-4 {
-        position: absolute;
-        top: 16px;
-        left: 0;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .status.error {
+            background: #fee;
+            color: #c00;
+            display: block;
+        }
 
-      .box .text-wrapper-5 {
-        position: absolute;
-        top: 16px;
-        left: 71px;
-        font-family: "Inter-SemiBold", Helvetica;
-        font-weight: 600;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .status.success {
+            background: #efe;
+            color: #060;
+            display: block;
+        }
 
-      .box .text-wrapper-6 {
-        position: absolute;
-        top: 32px;
-        left: 0;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .label-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
 
-      .box .text-wrapper-7 {
-        position: absolute;
-        top: 32px;
-        left: 71px;
-        font-family: "Inter-SemiBold", Helvetica;
-        font-weight: 600;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .label-container.show {
+            display: block;
+        }
 
-      .box .perelik {
-        display: flex;
-        flex-direction: column;
-        width: 190px;
-        height: 91px;
-        align-items: flex-start;
-        gap: 1px;
-        position: absolute;
-        top: 92px;
-        left: 16px;
-      }
+        .label {
+            width: 390px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 2px solid #000;
+            background: white;
+            position: relative;
+        }
 
-      .box .frame-2 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(1, minmax(0, 1fr));
-        height: 12px;
-        gap: 1px;
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 190px;
-      }
+        .logo {
+            width: 200px;
+            height: auto;
+            display: block;
+            margin: 0 auto 15px;
+        }
 
-      .box .text-wrapper-8 {
-        position: relative;
-        grid-row: 1 / 2;
-        grid-column: 1 / 2;
-        width: 66px;
-        height: 12px;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            line-height: 1.3;
+        }
 
-      .box .text-wrapper-9 {
-        grid-row: 1 / 2;
-        grid-column: 2 / 3;
-        justify-self: end;
-        width: 22px;
-        height: 12px;
-        font-size: 10px;
-        white-space: nowrap;
-        position: relative;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .photo-container {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+        }
 
-      .box .frame-3 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(1, minmax(0, 1fr));
-        height: 13px;
-        gap: 1px;
-        position: absolute;
-        top: 13px;
-        left: 0;
-        width: 190px;
-      }
+        .product-photo {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
 
-      .box .text-wrapper-10 {
-        position: relative;
-        grid-row: 1 / 2;
-        grid-column: 1 / 2;
-        width: 36px;
-        height: 12px;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
 
-      .box .frame-4 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(1, minmax(0, 1fr));
-        height: 12px;
-        gap: 1px;
-        position: absolute;
-        top: 27px;
-        left: 0;
-        width: 190px;
-      }
+        .info-table td {
+            padding: 8px;
+            border: 1px solid #000;
+            font-size: 14px;
+        }
 
-      .box .text-wrapper-11 {
-        position: relative;
-        grid-row: 1 / 2;
-        grid-column: 1 / 2;
-        width: 133px;
-        height: 12px;
-        font-family: "Inter-Regular", Helvetica;
-        font-weight: 400;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .info-table td:first-child {
+            font-weight: bold;
+            width: 40%;
+            background: #f0f0f0;
+        }
 
-      .box .frame-5 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        grid-template-rows: repeat(1, minmax(0, 1fr));
-        height: 12px;
-        gap: 1px;
-        position: absolute;
-        top: 40px;
-        left: 0;
-        width: 190px;
-      }
+        .qr-code {
+            text-align: center;
+            padding: 10px;
+        }
 
-      .box .text-wrapper-12 {
-        position: absolute;
-        top: 77px;
-        left: 16px;
-        font-family: "Inter-SemiBold", Helvetica;
-        font-weight: 600;
-        font-size: 10px;
-        white-space: nowrap;
-        color: #000000;
-        letter-spacing: 0;
-        line-height: normal;
-      }
+        .qr-code img {
+            width: 100px;
+            height: 100px;
+        }
 
+        .print-button {
+            display: block;
+            margin: 20px auto 0;
+            padding: 15px 40px;
+            font-size: 18px;
+        }
 
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .search-section,
+            .print-button {
+                display: none !important;
+            }
+
+            .label-container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .label {
+                margin: 0;
+                page-break-after: always;
+            }
+        }
     </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-section">
+            <h2>🏷️ Генератор етикеток</h2>
+            <div class="input-group">
+                <input type="text" id="articleInput" placeholder="Введіть артикул товару...">
+                <button onclick="searchArticle()">Знайти</button>
+            </div>
+            <div id="status" class="status"></div>
+        </div>
 
-  </head>
-  <body>
-    <div class="box">
-      <div class="group">
-        <div class="rectangle"></div>
-        <img class="lizhko-karolina-eko" src="img/lizhko-karolina-eko-1.png" />
-        <img class="logo-neutral-d" src="img/logo-neutral-d-1.png" />
-        <div class="frame">
-          <div class="text-wrapper">Ліжко Кароліна Еко</div>
-          <div class="div">120 х 200</div>
+        <div id="labelContainer" class="label-container">
+            <div class="label">
+                <img src="https://i.imgur.com/9xZx5Zj.png" alt="Logo" class="logo">
+                
+                <div class="product-name" id="productName">Ліжко Кароліна Еко</div>
+                
+                <div class="photo-container">
+                    <img id="productPhoto" class="product-photo lizhko-karolina-eko" src="" alt="Фото товару">
+                </div>
+                
+                <table class="info-table">
+                    <tr>
+                        <td>Розмір</td>
+                        <td id="size">120 х 200</td>
+                    </tr>
+                    <tr>
+                        <td>Оббивка</td>
+                        <td id="fabric">Беж lw 06/1</td>
+                    </tr>
+                    <tr>
+                        <td>Дерево</td>
+                        <td id="wood">Бук</td>
+                    </tr>
+                    <tr>
+                        <td>Тип дерева</td>
+                        <td id="woodType">Зрощений/Цільний</td>
+                    </tr>
+                </table>
+                
+                <div class="qr-code">
+                    <img id="qrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://example.com" alt="QR Code">
+                </div>
+            </div>
+            
+            <button class="print-button" onclick="window.print()">🖨️ Друкувати етикетку</button>
         </div>
-        <div class="vlastuvosti">
-          <div class="text-wrapper-2">Колір:</div>
-          <div class="text-wrapper-3">Беж lw 06/1</div>
-          <div class="text-wrapper-4">Деревина:</div>
-          <div class="text-wrapper-5">Бук</div>
-          <div class="text-wrapper-6">Матеріал:</div>
-          <div class="text-wrapper-7">Зрощений/Цільний</div>
-        </div>
-        <div class="perelik">
-          <div class="frame-2">
-            <div class="text-wrapper-8">Бокова царга</div>
-            <div class="text-wrapper-9">2 шт</div>
-          </div>
-          <div class="frame-3">
-            <div class="text-wrapper-10">Спинка</div>
-            <div class="text-wrapper-9">2 шт</div>
-          </div>
-          <div class="frame-4">
-            <div class="text-wrapper-11">Рейка для ламелей бокова</div>
-            <div class="text-wrapper-9">2 шт</div>
-          </div>
-          <div class="frame-5">
-            <div class="text-wrapper-10">Спинка</div>
-            <div class="text-wrapper-9">2 шт</div>
-          </div>
-        </div>
-        <div class="text-wrapper-12">Перелік деталей:</div>
-      </div>
     </div>
-  </body>
+
+    <script>
+        let tableData = [];
+
+        async function loadGoogleSheetData() {
+            const sheetId = '1ce3b7vIdVL0NSHDw2uIRXETbw5INoH5xXlHKAztnuPY';
+            const sheetName = 'Baza';
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const json = JSON.parse(text.substring(47).slice(0, -2));
+                
+                tableData = json.table.rows.map(row => ({
+                    article: row.c[0] ? row.c[0].v : '',
+                    name: row.c[1] ? row.c[1].v : '',
+                    size: row.c[2] ? row.c[2].v : '',
+                    fabric: row.c[3] ? row.c[3].v : '',
+                    wood: row.c[4] ? row.c[4].v : '',
+                    woodType: row.c[5] ? row.c[5].v : '',
+                    photoUrl: row.c[6] ? row.c[6].v : ''
+                }));
+
+                return true;
+            } catch (error) {
+                console.error('Помилка завантаження даних:', error);
+                return false;
+            }
+        }
+
+        async function searchArticle() {
+            const input = document.getElementById('articleInput');
+            const status = document.getElementById('status');
+            const labelContainer = document.getElementById('labelContainer');
+            const article = input.value.trim();
+
+            if (!article) {
+                status.className = 'status error';
+                status.textContent = '❌ Будь ласка, введіть артикул';
+                return;
+            }
+
+            status.className = 'status';
+            status.textContent = '⏳ Завантаження даних...';
+
+            if (tableData.length === 0) {
+                const loaded = await loadGoogleSheetData();
+                if (!loaded) {
+                    status.className = 'status error';
+                    status.textContent = '❌ Помилка завантаження даних з Google Таблиці';
+                    return;
+                }
+            }
+
+            const product = tableData.find(row => 
+                row.article && row.article.toString().toLowerCase() === article.toLowerCase()
+            );
+
+            if (!product) {
+                status.className = 'status error';
+                status.textContent = `❌ Артикул "${article}" не знайдено в базі даних`;
+                labelContainer.classList.remove('show');
+                return;
+            }
+
+            document.getElementById('productName').textContent = product.name || 'Назва не вказана';
+            document.getElementById('size').textContent = product.size || '-';
+            document.getElementById('fabric').textContent = product.fabric || '-';
+            document.getElementById('wood').textContent = product.wood || '-';
+            document.getElementById('woodType').textContent = product.woodType || '-';
+            
+            const photoImg = document.getElementById('productPhoto');
+            if (product.photoUrl) {
+                photoImg.src = product.photoUrl;
+                photoImg.alt = product.name;
+                photoImg.className = 'product-photo';
+            } else {
+                photoImg.src = '';
+                photoImg.alt = 'Фото відсутнє';
+            }
+
+            document.getElementById('qrCode').src = 
+                `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://example.com/product/${encodeURIComponent(article)}`;
+
+            status.className = 'status success';
+            status.textContent = '✅ Товар знайдено! Етикетка готова до друку';
+            labelContainer.classList.add('show');
+        }
+
+        document.getElementById('articleInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchArticle();
+            }
+        });
+
+        window.addEventListener('load', function() {
+            loadGoogleSheetData();
+        });
+    </script>
+</body>
 </html>
