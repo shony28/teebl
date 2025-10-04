@@ -1589,7 +1589,7 @@ function extractProductData(row, columnMapping) {
     ];
 }
 
-        async function fetchProducts() {
+       async function fetchProducts() {
     const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
     
     if (!spreadsheetId) {
@@ -1601,8 +1601,8 @@ function extractProductData(row, columnMapping) {
         // Загружаем настройки в начале
         await loadSettings();
         
-        // Загружаем товары с заголовками (A1:F вместо A2:F)
-        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:F`;
+        // Используем константу RANGE вместо хардкода
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${RANGE}`;
         const productsResponse = await fetch(productsUrl);
         const productsTextData = await productsResponse.text();
         const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
@@ -1640,7 +1640,7 @@ function extractProductData(row, columnMapping) {
         
         allProducts = formattedProducts;
 
-        // Загружаем категории (без изменений, если у категорий фиксированная структура)
+        // Загружаем категории
         const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
         const categoriesResponse = await fetch(categoriesUrl);
         const categoriesTextData = await categoriesResponse.text();
