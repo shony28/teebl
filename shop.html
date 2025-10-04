@@ -1609,16 +1609,34 @@ function extractProductData(row, columnMapping) {
         const productsData = JSON.parse(productsJsonString);
         const productsRows = productsData.table.rows;
         
+        // Проверяем что есть хотя бы 2 строки (заголовок + данные)
+        if (!productsRows || productsRows.length < 2) {
+            console.error('Недостаточно данных в таблице товаров');
+            return;
+        }
+        
         // Первая строка - заголовки
         const headers = productsRows[0].c;
         const columnMapping = createColumnMapping(headers);
         
         console.log('Маппинг столбцов товаров:', columnMapping);
         
-        // Остальные строки - данные товаров
-        const formattedProducts = productsRows.slice(1).map(row => {
-            return extractProductData(row, columnMapping);
-        });
+        // Проверяем что все необходимые колонки найдены
+        const requiredColumns = ['id', 'name', 'price'];
+        const missingColumns = requiredColumns.filter(col => columnMapping[col] === undefined);
+        if (missingColumns.length > 0) {
+            console.error('Отсутствуют обязательные колонки:', missingColumns);
+            console.error('Найденные заголовки:', Object.keys(columnMapping));
+            alert('Ошибка: в таблице отсутствуют обязательные колонки: ' + missingColumns.join(', '));
+            return;
+        }
+        
+        // Остальные строки - данные товаров (пропускаем пустые строки)
+        const formattedProducts = productsRows.slice(1)
+            .filter(row => row.c && row.c.some(cell => cell && cell.v !== null && cell.v !== ''))
+            .map(row => {
+                return extractProductData(row, columnMapping);
+            });
         
         allProducts = formattedProducts;
 
