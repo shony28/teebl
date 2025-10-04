@@ -1138,14 +1138,6 @@
         let settingsData = {};
         let allPages = [];
         let currentPageId = null;
-        let columnIndices = {
-            id: 0,
-            name: 1,
-            description: 2,
-            price: 3,
-            imageUrl: 4,
-            tags: 5
-        };
 
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
@@ -1255,45 +1247,6 @@
                 }
             }
         }
-
-        //функцию для определения индексов столбцов
-
-        function parseColumnHeaders(headerRow) {
-    const indices = {};
-    const columnMapping = {
-        'id': 'id',
-        'name': 'name',
-        'description': 'description',
-        'price': 'price',
-        'image-url': 'imageUrl',
-        'tags': 'tags'
-    };
-    
-    headerRow.forEach((cell, index) => {
-        if (cell && cell.v) {
-            const headerName = cell.v.toString().toLowerCase().trim();
-            if (columnMapping[headerName]) {
-                indices[columnMapping[headerName]] = index;
-            }
-        }
-    });
-    
-    // Проверяем, что все необходимые столбцы найдены
-    const requiredColumns = ['id', 'name', 'price'];
-    const missingColumns = requiredColumns.filter(col => indices[col] === undefined);
-    
-    if (missingColumns.length > 0) {
-        console.error('Не знайдено обов\'язкові стовпці:', missingColumns);
-        return null;
-    }
-    
-    // Устанавливаем значения по умолчанию для необязательных столбцов
-    if (indices.description === undefined) indices.description = null;
-    if (indices.imageUrl === undefined) indices.imageUrl = null;
-    if (indices.tags === undefined) indices.tags = null;
-    
-    return indices;
-}
 
         // Загрузка страниц с листа "pages"
         async function loadPages() {
@@ -1604,6 +1557,38 @@
             }
         }
 
+        // Функция для создания маппинга столбцов по заголовкам
+function createColumnMapping(headers) {
+    const mapping = {};
+    headers.forEach((header, index) => {
+        if (header && header.v) {
+            const headerName = header.v.toString().toLowerCase().trim();
+            mapping[headerName] = index;
+        }
+    });
+    return mapping;
+}
+
+// Функция для извлечения данных товара по маппингу
+function extractProductData(row, columnMapping) {
+    const getValue = (columnName) => {
+        const index = columnMapping[columnName];
+        if (index !== undefined && row.c[index]) {
+            return row.c[index].v !== null ? row.c[index].v : '';
+        }
+        return '';
+    };
+    
+    return [
+        getValue('id'),
+        getValue('name'),
+        getValue('description'),
+        getValue('price'),
+        getValue('image-url'),
+        getValue('tags')
+    ];
+}
+
         async function fetchProducts() {
     const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
     
@@ -1616,8 +1601,8 @@
         // Загружаем настройки в начале
         await loadSettings();
         
-        // Загружаем товары - теперь с первой строки для чтения заголовков
-        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:Z`;
+        // Загружаем товары с заголовками (A1:F вместо A2:F)
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:F`;
         const productsResponse = await fetch(productsUrl);
         const productsTextData = await productsResponse.text();
         const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
@@ -1625,41 +1610,19 @@
         const productsRows = productsData.table.rows;
         
         // Первая строка - заголовки
-        if (productsRows.length === 0) {
-            console.error('Лист товарів порожній');
-            return;
-        }
+        const headers = productsRows[0].c;
+        const columnMapping = createColumnMapping(headers);
         
-        const headerRow = productsRows[0].c;
-        const parsedIndices = parseColumnHeaders(headerRow);
+        console.log('Маппинг столбцов товаров:', columnMapping);
         
-        if (!parsedIndices) {
-            console.error('Не вдалося визначити стовпці. Переконайтеся, що перший рядок містить заголовки: id, name, price');
-            return;
-        }
-        
-        columnIndices = parsedIndices;
-        console.log('Визначені індекси стовпців:', columnIndices);
-        
-        // Обрабатываем строки с данными (начиная со второй строки)
-        const dataRows = productsRows.slice(1);
-        const formattedProducts = dataRows.map(row => {
-            const cells = row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-            
-            // Возвращаем массив в порядке: id, name, description, price, imageUrl, tags
-            return [
-                cells[columnIndices.id] || '',
-                cells[columnIndices.name] || '',
-                columnIndices.description !== null ? (cells[columnIndices.description] || '') : '',
-                cells[columnIndices.price] || '',
-                columnIndices.imageUrl !== null ? (cells[columnIndices.imageUrl] || '') : '',
-                columnIndices.tags !== null ? (cells[columnIndices.tags] || '') : ''
-            ];
+        // Остальные строки - данные товаров
+        const formattedProducts = productsRows.slice(1).map(row => {
+            return extractProductData(row, columnMapping);
         });
         
         allProducts = formattedProducts;
 
-        // Загружаем категории
+        // Загружаем категории (без изменений, если у категорий фиксированная структура)
         const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
         const categoriesResponse = await fetch(categoriesUrl);
         const categoriesTextData = await categoriesResponse.text();
