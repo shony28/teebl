@@ -1173,12 +1173,15 @@
         return null;
     }
     
+    console.log('Аналіз заголовків:', headerRow);
+    
     headerRow.forEach((cell, index) => {
         // Обрабатываем как объект с полем v, так и просто строку
         let headerName = '';
         
         // Проверяем на null и undefined перед обработкой
         if (cell === null || cell === undefined) {
+            console.log(`Стовпець ${index}: порожній`);
             return; // Пропускаем пустые ячейки
         }
         
@@ -1188,10 +1191,15 @@
             headerName = cell.toLowerCase().trim();
         }
         
+        console.log(`Стовпець ${index}: "${headerName}"`);
+        
         if (headerName && columnMapping[headerName]) {
             indices[columnMapping[headerName]] = index;
+            console.log(`Знайдено стовпець "${headerName}" на позиції ${index}`);
         }
     });
+    
+    console.log('Знайдені індекси:', indices);
     
     // Проверяем, что все необходимые столбцы найдены
     const requiredColumns = ['id', 'name', 'price'];
@@ -1199,7 +1207,8 @@
     
     if (missingColumns.length > 0) {
         console.error('Не знайдено обов\'язкові стовпці:', missingColumns);
-        console.log('Отримані заголовки:', headerRow);
+        console.log('Перевірте, що у першому рядку таблиці є заголовки: id, name, price');
+        console.log('Заголовки повинні бути написані точно так (малими літерами)');
         return null;
     }
     
