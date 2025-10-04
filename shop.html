@@ -1155,70 +1155,6 @@
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
-        //функцию для определения индексов столбцов
-        function parseColumnHeaders(headerRow) {
-    const indices = {};
-    const columnMapping = {
-        'id': 'id',
-        'name': 'name',
-        'description': 'description',
-        'price': 'price',
-        'image-url': 'imageUrl',
-        'tags': 'tags'
-    };
-    
-    // Проверяем, что headerRow существует и является массивом
-    if (!headerRow || !Array.isArray(headerRow)) {
-        console.error('headerRow відсутній або не є масивом');
-        return null;
-    }
-    
-    console.log('Аналіз заголовків:', headerRow);
-    
-    headerRow.forEach((cell, index) => {
-        // Обрабатываем как объект с полем v, так и просто строку
-        let headerName = '';
-        
-        // Проверяем на null и undefined перед обработкой
-        if (cell === null || cell === undefined) {
-            console.log(`Стовпець ${index}: порожній`);
-            return; // Пропускаем пустые ячейки
-        }
-        
-        if (typeof cell === 'object' && cell.v !== undefined && cell.v !== null) {
-            headerName = cell.v.toString().toLowerCase().trim();
-        } else if (typeof cell === 'string') {
-            headerName = cell.toLowerCase().trim();
-        }
-        
-        console.log(`Стовпець ${index}: "${headerName}"`);
-        
-        if (headerName && columnMapping[headerName]) {
-            indices[columnMapping[headerName]] = index;
-            console.log(`Знайдено стовпець "${headerName}" на позиції ${index}`);
-        }
-    });
-    
-    console.log('Знайдені індекси:', indices);
-    
-    // Проверяем, что все необходимые столбцы найдены
-    const requiredColumns = ['id', 'name', 'price'];
-    const missingColumns = requiredColumns.filter(col => indices[col] === undefined);
-    
-    if (missingColumns.length > 0) {
-        console.error('Не знайдено обов\'язкові стовпці:', missingColumns);
-        console.log('Перевірте, що у першому рядку таблиці є заголовки: id, name, price');
-        console.log('Заголовки повинні бути написані точно так (малими літерами)');
-        return null;
-    }
-    
-    // Устанавливаем значения по умолчанию для необязательных столбцов
-    if (indices.description === undefined) indices.description = null;
-    if (indices.imageUrl === undefined) indices.imageUrl = null;
-    if (indices.tags === undefined) indices.tags = null;
-    
-    return indices;
-}
 
         // Функция для выполнения fetch с повторными попытками
         async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
@@ -1319,6 +1255,45 @@
                 }
             }
         }
+
+        //функцию для определения индексов столбцов
+
+        function parseColumnHeaders(headerRow) {
+    const indices = {};
+    const columnMapping = {
+        'id': 'id',
+        'name': 'name',
+        'description': 'description',
+        'price': 'price',
+        'image-url': 'imageUrl',
+        'tags': 'tags'
+    };
+    
+    headerRow.forEach((cell, index) => {
+        if (cell && cell.v) {
+            const headerName = cell.v.toString().toLowerCase().trim();
+            if (columnMapping[headerName]) {
+                indices[columnMapping[headerName]] = index;
+            }
+        }
+    });
+    
+    // Проверяем, что все необходимые столбцы найдены
+    const requiredColumns = ['id', 'name', 'price'];
+    const missingColumns = requiredColumns.filter(col => indices[col] === undefined);
+    
+    if (missingColumns.length > 0) {
+        console.error('Не знайдено обов\'язкові стовпці:', missingColumns);
+        return null;
+    }
+    
+    // Устанавливаем значения по умолчанию для необязательных столбцов
+    if (indices.description === undefined) indices.description = null;
+    if (indices.imageUrl === undefined) indices.imageUrl = null;
+    if (indices.tags === undefined) indices.tags = null;
+    
+    return indices;
+}
 
         // Загрузка страниц с листа "pages"
         async function loadPages() {
@@ -1655,15 +1630,11 @@
             return;
         }
         
-        // Извлекаем заголовки из первой строки
         const headerRow = productsRows[0].c;
-        console.log('Заголовки з таблиці:', headerRow);
-        
         const parsedIndices = parseColumnHeaders(headerRow);
         
         if (!parsedIndices) {
             console.error('Не вдалося визначити стовпці. Переконайтеся, що перший рядок містить заголовки: id, name, price');
-            console.log('Структура першого рядка:', productsRows[0]);
             return;
         }
         
