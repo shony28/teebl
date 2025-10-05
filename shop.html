@@ -1557,68 +1557,84 @@
             }
         }
 
-        async function fetchProducts() {
-            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-            
-            if (!spreadsheetId) {
-                console.error('Не указан ID таблицы ни в константе, ни в параметрах URL');
+       async function fetchProducts() {
+    const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+    
+    if (!spreadsheetId) {
+        console.error('Не указан ID таблицы ни в константе, ни в параметрах URL');
+        return;
+    }
+    
+    try {
+        // Загружаем настройки в начале
+        await loadSettings();
+        
+        // Загружаем товары - добавляем headers=0 для правильного парсинга
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F&headers=0`;
+        const productsResponse = await fetch(productsUrl);
+        const productsTextData = await productsResponse.text();
+        const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const productsData = JSON.parse(productsJsonString);
+        const productsRows = productsData.table.rows;
+        const formattedProducts = productsRows.map(row => {
+            // Обрабатываем каждую ячейку, гарантируя правильное извлечение значения
+            return row.c.map((cell, index) => {
+                if (!cell) return '';
+                
+                // Для столбца D (price) - индекс 3
+                if (index === 3) {
+                    // Если есть formatted value (f), используем его
+                    if (cell.f !== undefined && cell.f !== null) {
+                        return cell.f;
+                    }
+                    // Иначе используем значение (v)
+                    return cell.v !== null ? String(cell.v) : '';
+                }
+                
+                // Для остальных столбцов
+                return cell.v !== null ? cell.v : '';
+            });
+        });
+        allProducts = formattedProducts;
+
+        // Загружаем категории
+        const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
+        const categoriesResponse = await fetch(categoriesUrl);
+        const categoriesTextData = await categoriesResponse.text();
+        const categoriesJsonString = categoriesTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const categoriesData = JSON.parse(categoriesJsonString);
+        const categoriesRows = categoriesData.table.rows;
+        const formattedCategories = categoriesRows.map(row => {
+            return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+        });
+        allCategories = formattedCategories;
+
+        // Проверяем хеш для определения что показывать
+        const hash = window.location.hash.substring(1);
+        if (hash) {
+            // Сначала проверяем, не товар ли это
+            const product = allProducts.find(p => p[0] === hash);
+            if (product) {
+                const [id, name, description, price, imageUrl, tags] = product;
+                showProductPage(id, name, description, price, imageUrl);
                 return;
             }
             
-            try {
-                // Загружаем настройки в начале
-                await loadSettings();
-                
-                // Загружаем товары
-                const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F`;
-                const productsResponse = await fetch(productsUrl);
-                const productsTextData = await productsResponse.text();
-                const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-                const productsData = JSON.parse(productsJsonString);
-                const productsRows = productsData.table.rows;
-                const formattedProducts = productsRows.map(row => {
-                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-                });
-                allProducts = formattedProducts;
-
-                // Загружаем категории
-                const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
-                const categoriesResponse = await fetch(categoriesUrl);
-                const categoriesTextData = await categoriesResponse.text();
-                const categoriesJsonString = categoriesTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-                const categoriesData = JSON.parse(categoriesJsonString);
-                const categoriesRows = categoriesData.table.rows;
-                const formattedCategories = categoriesRows.map(row => {
-                    return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
-                });
-                allCategories = formattedCategories;
-
-                // Проверяем хеш для определения что показывать
-                const hash = window.location.hash.substring(1);
-                if (hash) {
-                    // Сначала проверяем, не товар ли это
-                    const product = allProducts.find(p => p[0] === hash);
-                    if (product) {
-                        const [id, name, description, price, imageUrl, tags] = product;
-                        showProductPage(id, name, description, price, imageUrl);
-                        return;
-                    }
-                    
-                    // Если не товар, проверяем категорию
-                    const category = allCategories.find(c => c[0] === hash);
-                    if (category) {
-                        showCategory(hash);
-                        return;
-                    }
-                }
-                
-                // По умолчанию показываем главную страницу с категориями
-                showMainCategories();
-                
-            } catch (error) {
-                console.error("Ошибка при загрузке данных:", error);
+            // Если не товар, проверяем категорию
+            const category = allCategories.find(c => c[0] === hash);
+            if (category) {
+                showCategory(hash);
+                return;
             }
         }
+        
+        // По умолчанию показываем главную страницу с категориями
+        showMainCategories();
+        
+    } catch (error) {
+        console.error("Ошибка при загрузке данных:", error);
+    }
+}
 
         
         // Показать главные категории (без родительских) и товары без категории
