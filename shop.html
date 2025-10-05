@@ -1557,7 +1557,7 @@
             }
         }
 
-        async function fetchProducts() {
+       async function fetchProducts() {
     const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
     
     if (!spreadsheetId) {
@@ -1578,24 +1578,48 @@
         const productsRows = productsData.table.rows;
         
         // Проверяем, что данные получены
-        if (!productsRows || productsRows.length === 0) {
-            console.error('Данные товаров не получены или таблица пуста');
+        if (!productsRows || productsRows.length < 2) {
+            console.error('Данные товаров не получены или таблица содержит менее 2 рядов');
             return;
         }
         
-        // Выводим сырые данные заголовков для отладки
-        console.log('Сырые данные заголовков:', productsRows[0].c);
+        // ОТЛАДКА: Выводим первые 3 ряда для диагностики
+        console.log('Первые 3 ряда из API:');
+        for (let i = 0; i < Math.min(3, productsRows.length); i++) {
+            console.log(`Ряд ${i}:`, productsRows[i].c);
+        }
         
-        // Получаем заголовки из первой строки
-        const headers = productsRows[0].c.map(cell => {
-            if (cell && cell.v !== null && typeof cell.v === 'string') {
-                // Приводим к нижнему регистру и удаляем пробелы, включая неразрывные
+        // Ищем ряд с заголовками - это должен быть ряд, где есть "id", "name" и т.д.
+        let headerRowIndex = -1;
+        for (let i = 0; i < Math.min(3, productsRows.length); i++) {
+            const rowValues = productsRows[i].c.map(cell => {
+                if (cell && cell.v !== null && cell.v !== undefined && typeof cell.v === 'string') {
+                    return cell.v.toLowerCase().trim();
+                }
+                return '';
+            });
+            
+            // Проверяем, есть ли в этом ряду заголовки
+            if (rowValues.includes('id') && rowValues.includes('name')) {
+                headerRowIndex = i;
+                console.log(`Найден ряд с заголовками на индексе ${i}`);
+                break;
+            }
+        }
+        
+        if (headerRowIndex === -1) {
+            console.error('Не удалось найти ряд с заголовками (должен содержать "id" и "name")');
+            return;
+        }
+        
+        // Получаем заголовки из найденного ряда
+        const headers = productsRows[headerRowIndex].c.map(cell => {
+            if (cell && cell.v !== null && cell.v !== undefined && typeof cell.v === 'string') {
                 return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
             }
             return '';
         });
         
-        // Выводим обработанные заголовки для отладки
         console.log('Обработанные заголовки:', headers);
         
         // Сопоставляем индексы заголовков с ожидаемыми полями
@@ -1612,12 +1636,13 @@
         const missingColumns = Object.keys(columnMap).filter(key => columnMap[key] === -1);
         if (missingColumns.length > 0) {
             console.error('Отсутствуют обязательные столбцы:', missingColumns);
+            console.log('Найденные заголовки:', headers);
             console.log('Пожалуйста, проверьте, что заголовки в листе "goods" соответствуют: id, name, description, price, image-url, tags');
             return;
         }
         
-        // Форматируем товары, используя индексы из columnMap
-        allProducts = productsRows.slice(1).map(row => {
+        // Форматируем товары, начиная со следующего ряда после заголовков
+        allProducts = productsRows.slice(headerRowIndex + 1).map(row => {
             const product = {};
             Object.keys(columnMap).forEach(key => {
                 const index = columnMap[key];
@@ -1626,7 +1651,6 @@
             return product;
         });
         
-        // Выводим товары для отладки
         console.log('Загруженные товары:', allProducts);
         
         // Загружаем категории
@@ -1640,20 +1664,17 @@
             return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
         });
         
-        // Выводим категории для отладки
         console.log('Загруженные категории:', allCategories);
         
         // Проверяем хеш для определения, что показывать
         const hash = window.location.hash.substring(1);
         if (hash) {
-            // Сначала проверяем, не товар ли это
             const product = allProducts.find(p => p.id === hash);
             if (product) {
                 showProductPage(product.id, product.name, product.description, product.price, product['image-url']);
                 return;
             }
             
-            // Если не товар, проверяем категорию
             const category = allCategories.find(c => c[0] === hash);
             if (category) {
                 showCategory(hash);
@@ -1661,7 +1682,6 @@
             }
         }
         
-        // По умолчанию показываем главную страницу с категориями
         showMainCategories();
         
     } catch (error) {
