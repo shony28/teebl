@@ -1573,7 +1573,7 @@
         const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${RANGE}`;
         const productsResponse = await fetch(productsUrl);
         const productsTextData = await productsResponse.text();
-        const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse$$ | $$;$/g, '');
+        const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
         const productsData = JSON.parse(productsJsonString);
         const productsRows = productsData.table.rows;
         
@@ -1583,12 +1583,13 @@
             return;
         }
         
-        // Выводим сырые данные первой строки для отладки
-        console.log('Сырые данные первой строки:', productsRows[0].c);
+        // Выводим сырые данные заголовков для отладки
+        console.log('Сырые данные заголовков:', productsRows[0].c);
         
         // Получаем заголовки из первой строки
-        let headers = productsRows[0].c.map(cell => {
+        const headers = productsRows[0].c.map(cell => {
             if (cell && cell.v !== null && typeof cell.v === 'string') {
+                // Приводим к нижнему регистру и удаляем пробелы, включая неразрывные
                 return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
             }
             return '';
@@ -1596,23 +1597,6 @@
         
         // Выводим обработанные заголовки для отладки
         console.log('Обработанные заголовки:', headers);
-        
-        // Ожидаемые заголовки
-        const expectedHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
-        
-        // Проверяем, соответствуют ли заголовки ожидаемым
-        const headersMatch = expectedHeaders.every((header, index) => headers[index] === header);
-        
-        // Определяем, с какой строки начинать обработку данных
-        let dataRows = productsRows;
-        if (headersMatch) {
-            // Если заголовки корректны, данные начинаются со второй строки
-            dataRows = productsRows.slice(1);
-        } else {
-            // Если заголовки некорректны, предполагаем, что первая строка — это данные
-            console.warn('Первая строка не содержит корректных заголовков, используем ожидаемые заголовки:', expectedHeaders);
-            headers = expectedHeaders;
-        }
         
         // Сопоставляем индексы заголовков с ожидаемыми полями
         const columnMap = {
@@ -1633,7 +1617,7 @@
         }
         
         // Форматируем товары, используя индексы из columnMap
-        allProducts = dataRows.map(row => {
+        allProducts = productsRows.slice(1).map(row => {
             const product = {};
             Object.keys(columnMap).forEach(key => {
                 const index = columnMap[key];
@@ -1649,7 +1633,7 @@
         const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
         const categoriesResponse = await fetch(categoriesUrl);
         const categoriesTextData = await categoriesResponse.text();
-        const categoriesJsonString = categoriesTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse$$ | $$;$/g, '');
+        const categoriesJsonString = categoriesTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
         const categoriesData = JSON.parse(categoriesJsonString);
         const categoriesRows = categoriesData.table.rows;
         allCategories = categoriesRows.map(row => {
