@@ -1569,60 +1569,35 @@
         // Загружаем настройки в начале
         await loadSettings();
         
-        // Загружаем заголовки и данные товаров
-        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${RANGE}`;
-        const productsResponse = await fetch(productsUrl);
-        const productsTextData = await productsResponse.text();
-        const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
-        const productsData = JSON.parse(productsJsonString);
-        const productsRows = productsData.table.rows;
+        // Сначала загружаем ТОЛЬКО заголовки из первого ряда
+        const headersUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:F1`;
+        const headersResponse = await fetch(headersUrl);
+        const headersTextData = await headersResponse.text();
+        const headersJsonString = headersTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const headersData = JSON.parse(headersJsonString);
         
-        // Проверяем, что данные получены
-        if (!productsRows || productsRows.length < 2) {
-            console.error('Данные товаров не получены или таблица содержит менее 2 рядов');
-            return;
-        }
+        console.log('Сырые данные заголовков (A1:F1):', headersData.table.rows);
         
-        // ОТЛАДКА: Выводим первые 3 ряда для диагностики
-        console.log('Первые 3 ряда из API:');
-        for (let i = 0; i < Math.min(3, productsRows.length); i++) {
-            console.log(`Ряд ${i}:`, productsRows[i].c);
-        }
-        
-        // Ищем ряд с заголовками - это должен быть ряд, где есть "id", "name" и т.д.
-        let headerRowIndex = -1;
-        for (let i = 0; i < Math.min(3, productsRows.length); i++) {
-            const rowValues = productsRows[i].c.map(cell => {
+        // Получаем заголовки
+        let headers = [];
+        if (headersData.table.rows && headersData.table.rows.length > 0) {
+            headers = headersData.table.rows[0].c.map(cell => {
                 if (cell && cell.v !== null && cell.v !== undefined && typeof cell.v === 'string') {
-                    return cell.v.toLowerCase().trim();
+                    return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
                 }
                 return '';
             });
-            
-            // Проверяем, есть ли в этом ряду заголовки
-            if (rowValues.includes('id') && rowValues.includes('name')) {
-                headerRowIndex = i;
-                console.log(`Найден ряд с заголовками на индексе ${i}`);
-                break;
-            }
         }
-        
-        if (headerRowIndex === -1) {
-            console.error('Не удалось найти ряд с заголовками (должен содержать "id" и "name")');
-            return;
-        }
-        
-        // Получаем заголовки из найденного ряда
-        const headers = productsRows[headerRowIndex].c.map(cell => {
-            if (cell && cell.v !== null && cell.v !== undefined && typeof cell.v === 'string') {
-                return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
-            }
-            return '';
-        });
         
         console.log('Обработанные заголовки:', headers);
         
-        // Сопоставляем индексы заголовков с ожидаемыми полями
+        // Проверяем, что заголовки загружены
+        if (headers.length === 0 || !headers.includes('id') || !headers.includes('name')) {
+            console.error('Заголовки не найдены в первом ряду (A1:F1). Убедитесь, что в ячейках A1:F1 находятся: id, name, description, price, image-url, tags');
+            return;
+        }
+        
+        // Сопоставляем индексы заголовков
         const columnMap = {
             id: headers.indexOf('id'),
             name: headers.indexOf('name'),
@@ -1632,24 +1607,36 @@
             tags: headers.indexOf('tags')
         };
         
-        // Проверяем, все ли обязательные столбцы присутствуют
+        // Проверяем обязательные столбцы
         const missingColumns = Object.keys(columnMap).filter(key => columnMap[key] === -1);
         if (missingColumns.length > 0) {
             console.error('Отсутствуют обязательные столбцы:', missingColumns);
             console.log('Найденные заголовки:', headers);
-            console.log('Пожалуйста, проверьте, что заголовки в листе "goods" соответствуют: id, name, description, price, image-url, tags');
             return;
         }
         
-        // Форматируем товары, начиная со следующего ряда после заголовков
-        allProducts = productsRows.slice(headerRowIndex + 1).map(row => {
-            const product = {};
-            Object.keys(columnMap).forEach(key => {
-                const index = columnMap[key];
-                product[key] = row.c[index] ? (row.c[index].v !== null ? row.c[index].v : '') : '';
+        // Теперь загружаем данные товаров, начиная со второго ряда
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F`;
+        const productsResponse = await fetch(productsUrl);
+        const productsTextData = await productsResponse.text();
+        const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
+        const productsData = JSON.parse(productsJsonString);
+        const productsRows = productsData.table.rows;
+        
+        if (!productsRows || productsRows.length === 0) {
+            console.warn('Нет товаров в таблице (начиная с A2)');
+            allProducts = [];
+        } else {
+            // Форматируем товары
+            allProducts = productsRows.map(row => {
+                const product = {};
+                Object.keys(columnMap).forEach(key => {
+                    const index = columnMap[key];
+                    product[key] = row.c[index] ? (row.c[index].v !== null && row.c[index].v !== undefined ? row.c[index].v : '') : '';
+                });
+                return product;
             });
-            return product;
-        });
+        }
         
         console.log('Загруженные товары:', allProducts);
         
