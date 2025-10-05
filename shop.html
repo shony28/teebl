@@ -1577,13 +1577,26 @@
         const productsData = JSON.parse(productsJsonString);
         const productsRows = productsData.table.rows;
         
+        // Проверяем, что данные получены
+        if (!productsRows || productsRows.length === 0) {
+            console.error('Данные товаров не получены или таблица пуста');
+            return;
+        }
+        
+        // Выводим сырые данные заголовков для отладки
+        console.log('Сырые данные заголовков:', productsRows[0].c);
+        
         // Получаем заголовки из первой строки
         const headers = productsRows[0].c.map(cell => {
             if (cell && cell.v !== null && typeof cell.v === 'string') {
-                return cell.v.toLowerCase().trim();
+                // Приводим к нижнему регистру и удаляем пробелы, включая неразрывные
+                return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
             }
             return '';
         });
+        
+        // Выводим обработанные заголовки для отладки
+        console.log('Обработанные заголовки:', headers);
         
         // Сопоставляем индексы заголовков с ожидаемыми полями
         const columnMap = {
@@ -1599,6 +1612,7 @@
         const missingColumns = Object.keys(columnMap).filter(key => columnMap[key] === -1);
         if (missingColumns.length > 0) {
             console.error('Отсутствуют обязательные столбцы:', missingColumns);
+            console.log('Пожалуйста, проверьте, что заголовки в листе "goods" соответствуют: id, name, description, price, image-url, tags');
             return;
         }
         
@@ -1612,6 +1626,9 @@
             return product;
         });
         
+        // Выводим товары для отладки
+        console.log('Загруженные товары:', allProducts);
+        
         // Загружаем категории
         const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
         const categoriesResponse = await fetch(categoriesUrl);
@@ -1622,6 +1639,9 @@
         allCategories = categoriesRows.map(row => {
             return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
         });
+        
+        // Выводим категории для отладки
+        console.log('Загруженные категории:', allCategories);
         
         // Проверяем хеш для определения, что показывать
         const hash = window.location.hash.substring(1);
