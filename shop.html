@@ -1578,7 +1578,12 @@
         const productsRows = productsData.table.rows;
         
         // Получаем заголовки из первой строки
-        const headers = productsRows[0].c.map(cell => cell ? (cell.v !== null ? cell.v.toLowerCase().trim() : '') : '');
+        const headers = productsRows[0].c.map(cell => {
+            if (cell && cell.v !== null && typeof cell.v === 'string') {
+                return cell.v.toLowerCase().trim();
+            }
+            return '';
+        });
         
         // Сопоставляем индексы заголовков с ожидаемыми полями
         const columnMap = {
