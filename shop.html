@@ -1138,6 +1138,14 @@
         let settingsData = {};
         let allPages = [];
         let currentPageId = null;
+        let columnIndices = {
+            id: 0,
+            name: 1,
+            description: 2,
+            price: 3,
+            imageUrl: 4,
+            tags: 5
+        };
 
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
@@ -1439,6 +1447,44 @@
             }
         }
 
+        //функция для определения индексов столбцов
+        function parseColumnHeaders(headerRow) {
+    const indices = {};
+    const columnMapping = {
+        'id': 'id',
+        'name': 'name',
+        'description': 'description',
+        'price': 'price',
+        'image-url': 'imageUrl',
+        'tags': 'tags'
+    };
+    
+    headerRow.forEach((cell, index) => {
+        if (cell && cell.v) {
+            const headerName = cell.v.toString().toLowerCase().trim();
+            if (columnMapping[headerName]) {
+                indices[columnMapping[headerName]] = index;
+            }
+        }
+    });
+    
+    // Проверяем, что все необходимые столбцы найдены
+    const requiredColumns = ['id', 'name', 'price'];
+    const missingColumns = requiredColumns.filter(col => indices[col] === undefined);
+    
+    if (missingColumns.length > 0) {
+        console.error('Не знайдено обов\'язкові стовпці:', missingColumns);
+        return null;
+    }
+    
+    // Устанавливаем значения по умолчанию для необязательных столбцов
+    if (indices.description === undefined) indices.description = null;
+    if (indices.imageUrl === undefined) indices.imageUrl = null;
+    if (indices.tags === undefined) indices.tags = null;
+    
+    return indices;
+}
+
         // Показать страницу
         function showPage(pageId, pageTitle) {
             currentPageId = pageId;
@@ -1557,7 +1603,7 @@
             }
         }
 
-       async function fetchProducts() {
+        async function fetchProducts() {
     const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
     
     if (!spreadsheetId) {
@@ -1569,32 +1615,47 @@
         // Загружаем настройки в начале
         await loadSettings();
         
-        // Загружаем товары - добавляем headers=0 для правильного парсинга
-        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F&headers=0`;
+        // Загружаем товары - теперь с первой строки для чтения заголовков
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:Z`;
         const productsResponse = await fetch(productsUrl);
         const productsTextData = await productsResponse.text();
         const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
         const productsData = JSON.parse(productsJsonString);
         const productsRows = productsData.table.rows;
-        const formattedProducts = productsRows.map(row => {
-            // Обрабатываем каждую ячейку, гарантируя правильное извлечение значения
-            return row.c.map((cell, index) => {
-                if (!cell) return '';
-                
-                // Для столбца D (price) - индекс 3
-                if (index === 3) {
-                    // Если есть formatted value (f), используем его
-                    if (cell.f !== undefined && cell.f !== null) {
-                        return cell.f;
-                    }
-                    // Иначе используем значение (v)
-                    return cell.v !== null ? String(cell.v) : '';
-                }
-                
-                // Для остальных столбцов
-                return cell.v !== null ? cell.v : '';
-            });
+        
+        // Первая строка - заголовки
+        if (productsRows.length === 0) {
+            console.error('Лист товарів порожній');
+            return;
+        }
+        
+        const headerRow = productsRows[0].c;
+        const parsedIndices = parseColumnHeaders(headerRow);
+        
+        if (!parsedIndices) {
+            console.error('Не вдалося визначити стовпці. Переконайтеся, що перший рядок містить заголовки: id, name, price');
+            return;
+        }
+        
+        columnIndices = parsedIndices;
+        console.log('Визначені індекси стовпців:', columnIndices);
+        
+        // Обрабатываем строки с данными (начиная со второй строки)
+        const dataRows = productsRows.slice(1);
+        const formattedProducts = dataRows.map(row => {
+            const cells = row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
+            
+            // Возвращаем массив в порядке: id, name, description, price, imageUrl, tags
+            return [
+                cells[columnIndices.id] || '',
+                cells[columnIndices.name] || '',
+                columnIndices.description !== null ? (cells[columnIndices.description] || '') : '',
+                cells[columnIndices.price] || '',
+                columnIndices.imageUrl !== null ? (cells[columnIndices.imageUrl] || '') : '',
+                columnIndices.tags !== null ? (cells[columnIndices.tags] || '') : ''
+            ];
         });
+        
         allProducts = formattedProducts;
 
         // Загружаем категории
