@@ -1583,48 +1583,67 @@
             return;
         }
         
-        // Выводим сырые данные заголовков для отладки
-        console.log('Сырые данные заголовков:', productsRows[0].c);
+        // Выводим сырые данные первой строки для отладки
+        console.log('Сырые данные первой строки:', productsRows[0].c);
         
-        // Получаем заголовки из первой строки
-        const headers = productsRows[0].c.map(cell => {
+        // Проверяем, является ли первая строка заголовками
+        let headers = productsRows[0].c.map(cell => {
             if (cell && cell.v !== null && typeof cell.v === 'string') {
-                // Приводим к нижнему регистру и удаляем пробелы, включая неразрывные
                 return cell.v.toLowerCase().trim().replace(/\s+/g, ' ');
             }
             return '';
         });
         
-        // Выводим обработанные заголовки для отладки
-        console.log('Обработанные заголовки:', headers);
+        // Ожидаемые заголовки
+        const expectedHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
         
-        // Сопоставляем индексы заголовков с ожидаемыми полями
-        const columnMap = {
-            id: headers.indexOf('id'),
-            name: headers.indexOf('name'),
-            description: headers.indexOf('description'),
-            price: headers.indexOf('price'),
-            'image-url': headers.indexOf('image-url'),
-            tags: headers.indexOf('tags')
-        };
+        // Проверяем, соответствуют ли заголовки ожидаемым
+        const headersMatch = expectedHeaders.every((header, index) => headers[index] === header);
         
-        // Проверяем, все ли обязательные столбцы присутствуют
-        const missingColumns = Object.keys(columnMap).filter(key => columnMap[key] === -1);
-        if (missingColumns.length > 0) {
-            console.error('Отсутствуют обязательные столбцы:', missingColumns);
-            console.log('Пожалуйста, проверьте, что заголовки в листе "goods" соответствуют: id, name, description, price, image-url, tags');
-            return;
-        }
-        
-        // Форматируем товары, используя индексы из columnMap
-        allProducts = productsRows.slice(1).map(row => {
-            const product = {};
-            Object.keys(columnMap).forEach(key => {
-                const index = columnMap[key];
-                product[key] = row.c[index] ? (row.c[index].v !== null ? row.c[index].v : '') : '';
+        // Если заголовки не соответствуют, предполагаем, что первая строка — это данные, и используем ожидаемые заголовки
+        if (!headersMatch) {
+            console.warn('Первая строка не содержит корректных заголовков, используем ожидаемые заголовки:', expectedHeaders);
+            headers = expectedHeaders;
+            // Данные начинаются с первой строки, а не со второй
+            allProducts = productsRows.map(row => {
+                const product = {};
+                expectedHeaders.forEach((key, index) => {
+                    product[key] = row.c[index] ? (row.c[index].v !== null ? row.c[index].v : '') : '';
+                });
+                return product;
             });
-            return product;
-        });
+        } else {
+            // Если заголовки корректны, данные начинаются со второй строки
+            console.log('Обработанные заголовки:', headers);
+            
+            // Сопоставляем индексы заголовков с ожидаемыми полями
+            const columnMap = {
+                id: headers.indexOf('id'),
+                name: headers.indexOf('name'),
+                description: headers.indexOf('description'),
+                price: headers.indexOf('price'),
+                'image-url': headers.indexOf('image-url'),
+                tags: headers.indexOf('tags')
+            };
+            
+            // Проверяем, все ли обязательные столбцы присутствуют
+            const missingColumns = Object.keys(columnMap).filter(key => columnMap[key] === -1);
+            if (missingColumns.length > 0) {
+                console.error('Отсутствуют обязательные столбцы:', missingColumns);
+                console.log('Пожалуйста, проверьте, что заголовки в листе "goods" соответствуют: id, name, description, price, image-url, tags');
+                return;
+            }
+            
+            // Форматируем товары, используя индексы из columnMap
+            allProducts = productsRows.slice(1).map(row => {
+                const product = {};
+                Object.keys(columnMap).forEach(key => {
+                    const index = columnMap[key];
+                    product[key] = row.c[index] ? (row.c[index].v !== null ? row.c[index].v : '') : '';
+                });
+                return product;
+            });
+        }
         
         // Выводим товары для отладки
         console.log('Загруженные товары:', allProducts);
