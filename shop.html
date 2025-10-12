@@ -1249,13 +1249,20 @@
             }
         }
 
-        function getColumnMapping(headerRow) {
+function getColumnMapping(headerRow) {
     const mapping = {};
     const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
     
     headerRow.forEach((cell, index) => {
         if (!cell) return;
-        const headerValue = (cell.v || '').toString().toLowerCase().trim();
+        
+        // Обработка разных типов данных из Google Sheets API
+        let headerValue = '';
+        if (cell.v !== undefined && cell.v !== null) {
+            headerValue = cell.v.toString().toLowerCase().trim();
+        } else if (cell.f !== undefined && cell.f !== null) {
+            headerValue = cell.f.toString().toLowerCase().trim();
+        }
         
         if (requiredHeaders.includes(headerValue)) {
             mapping[headerValue] = index;
@@ -1632,15 +1639,24 @@
                         rowData[2] = row.c[columnMapping['description']].v !== null ? row.c[columnMapping['description']].v : '';
                     }
                     
-                    // price
-                    if (columnMapping['price'] !== undefined && row.c[columnMapping['price']]) {
-                        const priceCell = row.c[columnMapping['price']];
-                        if (priceCell.f !== undefined && priceCell.f !== null) {
-                            rowData[3] = priceCell.f;
-                        } else {
-                            rowData[3] = priceCell.v !== null ? String(priceCell.v) : '';
-                        }
-                    }
+  // price
+if (columnMapping['price'] !== undefined && row.c[columnMapping['price']]) {
+    const priceCell = row.c[columnMapping['price']];
+    if (priceCell) {
+        // Сначала проверяем формулу
+        if (priceCell.f !== undefined && priceCell.f !== null) {
+            rowData[3] = String(priceCell.f);
+        } 
+        // Затем проверяем значение
+        else if (priceCell.v !== undefined && priceCell.v !== null) {
+            rowData[3] = String(priceCell.v);
+        } 
+        // Если оба пусты
+        else {
+            rowData[3] = '';
+        }
+    }
+}
                     
                     // image-url
                     if (columnMapping['image-url'] !== undefined && row.c[columnMapping['image-url']]) {
