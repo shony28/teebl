@@ -1258,10 +1258,18 @@ function getColumnMapping(headerRow) {
         
         // Обработка разных типов данных из Google Sheets API
         let headerValue = '';
-        if (cell.v !== undefined && cell.v !== null) {
-            headerValue = cell.v.toString().toLowerCase().trim();
-        } else if (cell.f !== undefined && cell.f !== null) {
+        
+        // Проверяем formatted value (f) - это текстовое представление
+        if (cell.f !== undefined && cell.f !== null) {
             headerValue = cell.f.toString().toLowerCase().trim();
+        }
+        // Затем проверяем обычное значение (v)
+        else if (cell.v !== undefined && cell.v !== null) {
+            headerValue = cell.v.toString().toLowerCase().trim();
+        }
+        // Если есть формула, используем её
+        else if (cell.formula !== undefined && cell.formula !== null) {
+            headerValue = cell.formula.toString().toLowerCase().trim();
         }
         
         if (requiredHeaders.includes(headerValue)) {
@@ -1273,6 +1281,8 @@ function getColumnMapping(headerRow) {
     const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
     if (missingHeaders.length > 0) {
         console.warn('Відсутні заголовки:', missingHeaders);
+        console.log('Знайдені заголовки:', Object.keys(mapping));
+        console.log('Сирі дані заголовків:', headerRow);
     }
     
     return mapping;
