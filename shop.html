@@ -1249,34 +1249,34 @@
             }
         }
 
-        function getColumnMapping(headerRow) {
-            const mapping = {};
-            const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
-            
-            headerRow.forEach((cell, index) => {
-                if (!cell) return;
-                
-                // Проверяем и v, и f для получения значения заголовка
-                let headerValue = '';
-                if (cell.v !== null && cell.v !== undefined) {
-                    headerValue = cell.v.toString().toLowerCase().trim();
-                } else if (cell.f !== null && cell.f !== undefined) {
-                    headerValue = cell.f.toString().toLowerCase().trim();
-                }
-                
-                if (requiredHeaders.includes(headerValue)) {
-                    mapping[headerValue] = index;
-                }
-            });
-            
-            // Проверяем, что все обязательные заголовки найдены
-            const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
-            if (missingHeaders.length > 0) {
-                console.warn('Відсутні заголовки:', missingHeaders);
-            }
-            
-            return mapping;
+function getColumnMapping(headerRow) {
+    const mapping = {};
+    const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
+    
+    headerRow.forEach((cell, index) => {
+        if (!cell) return;
+        
+        // Проверяем и v, и f для получения значения заголовка
+        let headerValue = '';
+        if (cell.v !== null && cell.v !== undefined) {
+            headerValue = String(cell.v).toLowerCase().trim();
+        } else if (cell.f !== null && cell.f !== undefined) {
+            headerValue = String(cell.f).toLowerCase().trim();
         }
+        
+        if (requiredHeaders.includes(headerValue)) {
+            mapping[headerValue] = index;
+        }
+    });
+    
+    // Проверяем, что все обязательные заголовки найдены
+    const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
+    if (missingHeaders.length > 0) {
+        console.warn('Відсутні заголовки:', missingHeaders);
+    }
+    
+    return mapping;
+}
 
         // Загрузка страниц с листа "pages"
         async function loadPages() {
