@@ -1256,12 +1256,24 @@ function getColumnMapping(headerRow) {
     headerRow.forEach((cell, index) => {
         if (!cell) return;
         
-        // Проверяем и v, и f для получения значения заголовка
+        // Получаем значение заголовка из всех возможных полей
         let headerValue = '';
+        
+        // Проверяем все возможные поля в ячейке
         if (cell.v !== null && cell.v !== undefined) {
             headerValue = String(cell.v).toLowerCase().trim();
         } else if (cell.f !== null && cell.f !== undefined) {
             headerValue = String(cell.f).toLowerCase().trim();
+        } else if (typeof cell === 'string') {
+            headerValue = cell.toLowerCase().trim();
+        }
+        
+        // Дополнительная проверка: если ячейка - объект с другими полями
+        if (!headerValue && typeof cell === 'object') {
+            const possibleValue = cell.formattedValue || cell.value || cell.label;
+            if (possibleValue !== null && possibleValue !== undefined) {
+                headerValue = String(possibleValue).toLowerCase().trim();
+            }
         }
         
         if (requiredHeaders.includes(headerValue)) {
@@ -1273,6 +1285,8 @@ function getColumnMapping(headerRow) {
     const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
     if (missingHeaders.length > 0) {
         console.warn('Відсутні заголовки:', missingHeaders);
+        console.log('Знайдені заголовки:', Object.keys(mapping));
+        console.log('Структура першого рядка:', headerRow);
     }
     
     return mapping;
