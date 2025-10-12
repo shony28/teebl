@@ -1642,48 +1642,51 @@
         const formattedProducts = productsRows.map(row => {
             const rowData = new Array(6).fill(''); // [id, name, description, price, image-url, tags]
             
+            // Функция для безопасного получения значения ячейки
+            const getCellValue = (cell) => {
+                if (!cell) return '';
+                
+                // Проверяем формулу
+                if (cell.f !== undefined && cell.f !== null) {
+                    return String(cell.f);
+                }
+                
+                // Проверяем значение
+                if (cell.v !== undefined && cell.v !== null) {
+                    return String(cell.v);
+                }
+                
+                return '';
+            };
+            
             // id
             if (columnMapping['id'] !== undefined && row.c[columnMapping['id']]) {
-                rowData[0] = row.c[columnMapping['id']].v !== null ? row.c[columnMapping['id']].v : '';
+                rowData[0] = getCellValue(row.c[columnMapping['id']]);
             }
             
             // name
             if (columnMapping['name'] !== undefined && row.c[columnMapping['name']]) {
-                rowData[1] = row.c[columnMapping['name']].v !== null ? row.c[columnMapping['name']].v : '';
+                rowData[1] = getCellValue(row.c[columnMapping['name']]);
             }
             
             // description
             if (columnMapping['description'] !== undefined && row.c[columnMapping['description']]) {
-                rowData[2] = row.c[columnMapping['description']].v !== null ? row.c[columnMapping['description']].v : '';
+                rowData[2] = getCellValue(row.c[columnMapping['description']]);
             }
             
-            // price
+            // price - ИСПРАВЛЕННАЯ ОБРАБОТКА
             if (columnMapping['price'] !== undefined && row.c[columnMapping['price']]) {
-                const priceCell = row.c[columnMapping['price']];
-                if (priceCell) {
-                    // Сначала проверяем формулу
-                    if (priceCell.f !== undefined && priceCell.f !== null) {
-                        rowData[3] = String(priceCell.f);
-                    } 
-                    // Затем проверяем значение
-                    else if (priceCell.v !== undefined && priceCell.v !== null) {
-                        rowData[3] = String(priceCell.v);
-                    } 
-                    // Если оба пусты
-                    else {
-                        rowData[3] = '';
-                    }
-                }
+                rowData[3] = getCellValue(row.c[columnMapping['price']]);
             }
             
             // image-url
             if (columnMapping['image-url'] !== undefined && row.c[columnMapping['image-url']]) {
-                rowData[4] = row.c[columnMapping['image-url']].v !== null ? row.c[columnMapping['image-url']].v : '';
+                rowData[4] = getCellValue(row.c[columnMapping['image-url']]);
             }
             
             // tags
             if (columnMapping['tags'] !== undefined && row.c[columnMapping['tags']]) {
-                rowData[5] = row.c[columnMapping['tags']].v !== null ? row.c[columnMapping['tags']].v : '';
+                rowData[5] = getCellValue(row.c[columnMapping['tags']]);
             }
             
             return rowData;
