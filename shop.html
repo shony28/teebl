@@ -1138,6 +1138,7 @@
         let settingsData = {};
         let allPages = [];
         let currentPageId = null;
+        let columnMapping = {}; // Добавить после других глобальных переменных
 
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
@@ -1247,6 +1248,28 @@
                 }
             }
         }
+
+        function getColumnMapping(headerRow) {
+    const mapping = {};
+    const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
+    
+    headerRow.forEach((cell, index) => {
+        if (!cell) return;
+        const headerValue = (cell.v || '').toString().toLowerCase().trim();
+        
+        if (requiredHeaders.includes(headerValue)) {
+            mapping[headerValue] = index;
+        }
+    });
+    
+    // Проверяем, что все обязательные заголовки найдены
+    const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
+    if (missingHeaders.length > 0) {
+        console.warn('Відсутні заголовки:', missingHeaders);
+    }
+    
+    return mapping;
+}
 
         // Загрузка страниц с листа "pages"
         async function loadPages() {
@@ -1569,32 +1592,69 @@
         // Загружаем настройки в начале
         await loadSettings();
         
-        // Загружаем товары - добавляем headers=0 для правильного парсинга
-        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A2:F&headers=0`;
+        // Загружаем товары - теперь включаем первую строку для получения заголовков
+        const productsUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=goods!A1:Z&headers=0`;
         const productsResponse = await fetch(productsUrl);
         const productsTextData = await productsResponse.text();
         const productsJsonString = productsTextData.replace('/*O_o*/', '').replace(/google\.visualization\.Query\.setResponse\(|\);$/g, '');
         const productsData = JSON.parse(productsJsonString);
-        const productsRows = productsData.table.rows;
+        const allRows = productsData.table.rows;
+        
+        if (allRows.length < 2) {
+            console.error('Недостатньо даних у таблиці товарів');
+            return;
+        }
+        
+        // Первая строка - заголовки
+        const headerRow = allRows[0].c;
+        columnMapping = getColumnMapping(headerRow);
+        
+        console.log('Маппінг колонок:', columnMapping);
+        
+        // Остальные строки - данные товаров
+        const productsRows = allRows.slice(1);
+        
         const formattedProducts = productsRows.map(row => {
-            // Обрабатываем каждую ячейку, гарантируя правильное извлечение значения
-            return row.c.map((cell, index) => {
-                if (!cell) return '';
-                
-                // Для столбца D (price) - индекс 3
-                if (index === 3) {
-                    // Если есть formatted value (f), используем его
-                    if (cell.f !== undefined && cell.f !== null) {
-                        return cell.f;
-                    }
-                    // Иначе используем значение (v)
-                    return cell.v !== null ? String(cell.v) : '';
+            const rowData = new Array(6).fill(''); // [id, name, description, price, image-url, tags]
+            
+            // id
+            if (columnMapping['id'] !== undefined && row.c[columnMapping['id']]) {
+                rowData[0] = row.c[columnMapping['id']].v !== null ? row.c[columnMapping['id']].v : '';
+            }
+            
+            // name
+            if (columnMapping['name'] !== undefined && row.c[columnMapping['name']]) {
+                rowData[1] = row.c[columnMapping['name']].v !== null ? row.c[columnMapping['name']].v : '';
+            }
+            
+            // description
+            if (columnMapping['description'] !== undefined && row.c[columnMapping['description']]) {
+                rowData[2] = row.c[columnMapping['description']].v !== null ? row.c[columnMapping['description']].v : '';
+            }
+            
+            // price
+            if (columnMapping['price'] !== undefined && row.c[columnMapping['price']]) {
+                const priceCell = row.c[columnMapping['price']];
+                if (priceCell.f !== undefined && priceCell.f !== null) {
+                    rowData[3] = priceCell.f;
+                } else {
+                    rowData[3] = priceCell.v !== null ? String(priceCell.v) : '';
                 }
-                
-                // Для остальных столбцов
-                return cell.v !== null ? cell.v : '';
-            });
+            }
+            
+            // image-url
+            if (columnMapping['image-url'] !== undefined && row.c[columnMapping['image-url']]) {
+                rowData[4] = row.c[columnMapping['image-url']].v !== null ? row.c[columnMapping['image-url']].v : '';
+            }
+            
+            // tags
+            if (columnMapping['tags'] !== undefined && row.c[columnMapping['tags']]) {
+                rowData[5] = row.c[columnMapping['tags']].v !== null ? row.c[columnMapping['tags']].v : '';
+            }
+            
+            return rowData;
         });
+        
         allProducts = formattedProducts;
 
         // Загружаем категории
