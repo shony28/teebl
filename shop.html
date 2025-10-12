@@ -1639,7 +1639,7 @@
         const productsData = JSON.parse(productsJsonString);
         const productsRows = productsData.table.rows;
         
-        const formattedProducts = productsRows.map(row => {
+        const formattedProducts = productsRows.map((row, rowIndex) => {
             const rowData = new Array(6).fill(''); // [id, name, description, price, image-url, tags]
             
             // id
@@ -1657,21 +1657,37 @@
                 rowData[2] = row.c[columnMapping['description']].v !== null ? row.c[columnMapping['description']].v : '';
             }
             
-            // price
-            if (columnMapping['price'] !== undefined && row.c[columnMapping['price']]) {
+            // price - улучшенная обработка
+            if (columnMapping['price'] !== undefined) {
                 const priceCell = row.c[columnMapping['price']];
+                
+                // Добавляем детальное логирование для первого товара
+                if (rowIndex === 0) {
+                    console.log('Перша ціна (сира ячейка):', priceCell);
+                }
+                
                 if (priceCell) {
-                    // Сначала проверяем формулу
-                    if (priceCell.f !== undefined && priceCell.f !== null) {
-                        rowData[3] = String(priceCell.f);
-                    } 
-                    // Затем проверяем значение
-                    else if (priceCell.v !== undefined && priceCell.v !== null) {
-                        rowData[3] = String(priceCell.v);
-                    } 
-                    // Если оба пусты
-                    else {
-                        rowData[3] = '';
+                    let priceValue = '';
+                    
+                    // Проверяем formatted value (f) - форматированное отображение
+                    if (priceCell.f !== undefined && priceCell.f !== null && priceCell.f !== '') {
+                        priceValue = String(priceCell.f);
+                    }
+                    // Проверяем обычное значение (v)
+                    else if (priceCell.v !== undefined && priceCell.v !== null && priceCell.v !== '') {
+                        priceValue = String(priceCell.v);
+                    }
+                    
+                    rowData[3] = priceValue;
+                    
+                    // Логируем для первого товара
+                    if (rowIndex === 0) {
+                        console.log('Перша ціна (результат):', priceValue);
+                    }
+                } else {
+                    // Ячейка полностью отсутствует или null
+                    if (rowIndex === 0) {
+                        console.log('Перша ціна: ячейка відсутня або null');
                     }
                 }
             }
@@ -1690,6 +1706,9 @@
         });
         
         allProducts = formattedProducts;
+        
+        // Логируем первый товар для проверки
+        console.log('Перший товар (фінальний):', allProducts[0]);
 
         // Загружаем категории
         const categoriesUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:json&range=${CATEGORIES_RANGE}`;
