@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script>
+        // Получаем путь из 404 страницы и преобразуем его в параметры
+        (function() {
+            var path = window.location.pathname;
+            
+            // Проверяем, начинается ли путь с /shop/
+            if (path.startsWith('/shop/')) {
+                // Убираем /shop/ и разбиваем на части
+                var parts = path.substring(6).split('/');
+                
+                // Формируем query параметры
+                var params = new URLSearchParams();
+                
+                for (var i = 0; i < parts.length; i += 2) {
+                    if (parts[i] && parts[i + 1]) {
+                        params.set(parts[i], decodeURIComponent(parts[i + 1]));
+                    }
+                }
+                
+                // Перенаправляем на shop.html с параметрами
+                var newUrl = '/shop.html?' + params.toString();
+                window.history.replaceState(null, null, newUrl);
+                window.location.replace(newUrl);
+            } else {
+                // Если это не наш путь, просто редиректим на главную
+                window.location.replace('/');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+</body>
+</html>
