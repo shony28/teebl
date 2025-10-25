@@ -1149,6 +1149,26 @@
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
 
+
+        // Функція для роботи з URL-параметрами
+        function updateURL(params) {
+            const url = new URL(window.location);
+            
+            // Очищаємо старі параметри товарів/категорій
+            url.searchParams.delete('goodsId');
+            url.searchParams.delete('categoryId');
+            url.searchParams.delete('pageId');
+            
+            // Додаємо нові параметри
+            Object.keys(params).forEach(key => {
+                if (params[key]) {
+                    url.searchParams.set(key, params[key]);
+                }
+            });
+            
+            window.history.pushState({}, '', url);
+        }
+
         // Функция для выполнения fetch с повторными попытками
         async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
             for (let i = 0; i < retries; i++) {
@@ -1465,7 +1485,7 @@
         // Показать страницу
         function showPage(pageId, pageTitle) {
             currentPageId = pageId;
-            window.history.pushState({pageId: pageId}, '', `#page-${pageId}`);
+            updateURL({pageId: pageId});
             
             const productsContainer = document.getElementById('products');
             productsContainer.innerHTML = '';
@@ -1497,7 +1517,6 @@
             document.getElementById('products').classList.remove('hidden');
             document.getElementById('product-page').classList.remove('active');
         }
-
         
         
         // Применение настроек к интерфейсу
@@ -1704,34 +1723,46 @@
         const formattedCategories = categoriesRows.map(row => {
             return row.c.map(cell => cell ? (cell.v !== null ? cell.v : '') : '');
         });
+
         allCategories = formattedCategories;
 
-        // Проверяем хеш для определения что показывать
-        const hash = window.location.hash.substring(1);
-        if (hash) {
-            // Сначала проверяем, не товар ли это
-            const product = allProducts.find(p => p[0] === hash);
-            if (product) {
-                const [id, name, description, price, imageUrl, tags] = product;
-                showProductPage(id, name, description, price, imageUrl);
-                return;
-            }
-            
-            // Если не товар, проверяем категорию
-            const category = allCategories.find(c => c[0] === hash);
-            if (category) {
-                showCategory(hash);
-                return;
+                // Проверяем URL-параметры для определения что показывать
+                const goodsId = getParameterByName('goodsId');
+                const categoryId = getParameterByName('categoryId');
+                const pageId = getParameterByName('pageId');
+                
+                if (pageId) {
+                    const pageData = allPages.find(p => p[0] === pageId);
+                    if (pageData) {
+                        showPage(pageId, pageData[1] || pageId);
+                        return;
+                    }
+                }
+                
+                if (goodsId) {
+                    const product = allProducts.find(p => p[0] === goodsId);
+                    if (product) {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        showProductPage(id, name, description, price, imageUrl);
+                        return;
+                    }
+                }
+                
+                if (categoryId) {
+                    const category = allCategories.find(c => c[0] === categoryId);
+                    if (category) {
+                        showCategory(categoryId);
+                        return;
+                    }
+                }
+                
+                // По умолчанию показываем главную страницу с категориями
+                showMainCategories();
+                
+            } catch (error) {
+                console.error("Ошибка при загрузке данных:", error);
             }
         }
-        
-        // По умолчанию показываем главную страницу с категориями
-        showMainCategories();
-        
-    } catch (error) {
-        console.error("Ошибка при загрузке данных:", error);
-    }
-}
         
         // Показать главные категории (без родительских) и товары без категории
         function showMainCategories() {
@@ -1765,7 +1796,7 @@
         // Показать категорию (подкатегории и товары)
         function showCategory(categoryId) {
             currentCategoryId = categoryId;
-            window.history.pushState({categoryId: categoryId}, '', `#${categoryId}`);
+            updateURL({categoryId: categoryId});
             
             // Найти подкатегории данной категории
             const subcategories = allCategories.filter(category => category[2] === categoryId);
@@ -1913,8 +1944,12 @@
             }
 
             function goToHome() {
-                // Убираем хеш из URL
-                window.history.pushState({}, '', window.location.pathname + window.location.search);
+                // Очищаємо параметри
+                const url = new URL(window.location);
+                url.searchParams.delete('goodsId');
+                url.searchParams.delete('categoryId');
+                url.searchParams.delete('pageId');
+                window.history.pushState({}, '', url);
                 
                 // Сбрасываем поиск если есть
                 document.getElementById('search').value = '';
@@ -1932,8 +1967,8 @@
 
                 // функции для работы со страницей товара
             function showProductPage(id, name, description, price, imageUrl) {
-                // Обновляем URL с хешем
-                window.history.pushState({productId: id}, '', `#${id}`);
+                // Обновляем URL с параметром
+                updateURL({goodsId: id});
                 
                 // Заполняем данные страницы товара
                 document.getElementById('page-image').src = imageUrl;
@@ -1965,19 +2000,30 @@
                 window.scrollTo(0, 0);
             }
 
-        function showProductsList() {
-            // Убираем хеш из URL
-            window.history.pushState({}, '', window.location.pathname + window.location.search);
-            
-            // Показываем главную страницу с категориями
-            showMainCategories();
-            
-            // Скрываем страницу товара
-            document.getElementById('product-page').classList.remove('active');
-            
-            // Прокручиваем к началу страницы
-            window.scrollTo(0, 0);
-        }
+
+
+
+            function showProductsList() {
+                // Очищаємо параметри
+                const url = new URL(window.location);
+                url.searchParams.delete('goodsId');
+                url.searchParams.delete('categoryId');
+                url.searchParams.delete('pageId');
+                window.history.pushState({}, '', url);
+                
+                // Показываем главную страницу с категориями
+                showMainCategories();
+                
+                // Скрываем страницу товара
+                document.getElementById('product-page').classList.remove('active');
+                
+                // Прокручиваем к началу страницы
+                window.scrollTo(0, 0);
+            }
+
+
+
+
         function filterProducts() {
                 const searchTerm = document.getElementById('search').value.toLowerCase();
                 
@@ -2281,64 +2327,52 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCart();
-            fetchProducts();
-            initScrollTracking();
-            
-            // Добавить обработчики для поля телефона:
-            const phoneInput = document.getElementById('phone');
-            phoneInput.addEventListener('input', function(e) {
-                formatPhone(e.target);
-            });
-            phoneInput.addEventListener('keydown', handlePhoneKeydown);
-            phoneInput.addEventListener('click', handlePhoneClick);
-            phoneInput.addEventListener('focus', function(e) {
-                // При фокусе устанавливаем курсор после +38
-                setTimeout(() => {
-                    e.target.setSelectionRange(3, 3);
-                }, 0);
-            });
-            
-            window.addEventListener('hashchange', checkHashAndShowProduct);
-            
-            window.addEventListener('popstate', function(event) {
-                if (event.state && event.state.productId) {
-                    checkHashAndShowProduct();
-                } else {
-                    const hash = window.location.hash.substring(1);
-                    if (hash) {
-                        checkHashAndShowProduct();
-                    } else {
-                        showProductsList();
+            document.addEventListener('DOMContentLoaded', function() {
+                loadCart();
+                fetchProducts();
+                initScrollTracking();
+                
+                // Добавить обработчики для поля телефона:
+                const phoneInput = document.getElementById('phone');
+                phoneInput.addEventListener('input', function(e) {
+                    formatPhone(e.target);
+                });
+                phoneInput.addEventListener('keydown', handlePhoneKeydown);
+                phoneInput.addEventListener('click', handlePhoneClick);
+                phoneInput.addEventListener('focus', function(e) {
+                    // При фокусе устанавливаем курсор после +38
+                    setTimeout(() => {
+                        e.target.setSelectionRange(3, 3);
+                    }, 0);
+                });
+                
+                window.addEventListener('popstate', function(event) {
+                    checkURLAndShowContent();
+                });
+                
+                document.getElementById('search').addEventListener('input', function(e) {
+                    filterProducts();
+                });
+                
+                document.addEventListener('click', function(e) {
+                    if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                        closeMobileNav();
                     }
-                }
+                });
             });
-            
-            document.getElementById('search').addEventListener('input', function(e) {
-                filterProducts();
-            });
-            
-            document.addEventListener('click', function(e) {
-                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                    closeMobileNav();
-                }
-            });
-        });
 
-      //  функцию для проверки хеша и показа товара
-        function checkHashAndShowProduct() {
-            const hash = window.location.hash.substring(1);
-            
-            // Если данные еще не загрузились, ждем
-            if (allProducts.length === 0 || allCategories.length === 0) {
-                return;
-            }
-            
-            if (hash) {
-                // Проверяем, не страница ли это
-                if (hash.startsWith('page-')) {
-                    const pageId = hash.substring(5);
+            function checkURLAndShowContent() {
+                const goodsId = getParameterByName('goodsId');
+                const categoryId = getParameterByName('categoryId');
+                const pageId = getParameterByName('pageId');
+                
+                // Если данные еще не загрузились, ждем
+                if (allProducts.length === 0 || allCategories.length === 0) {
+                    return;
+                }
+                
+                // Проверяем параметр pageId
+                if (pageId) {
                     const pageData = allPages.find(p => p[0] === pageId);
                     if (pageData) {
                         showPage(pageId, pageData[1] || pageId);
@@ -2346,29 +2380,28 @@
                     }
                 }
                 
-                // Сначала проверяем, не товар ли это
-                const product = allProducts.find(p => p[0] === hash);
-                if (product) {
-                    const [id, name, description, price, imageUrl, tags] = product;
-                    showProductPage(id, name, description, price, imageUrl);
-                    return;
+                // Проверяем параметр goodsId
+                if (goodsId) {
+                    const product = allProducts.find(p => p[0] === goodsId);
+                    if (product) {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        showProductPage(id, name, description, price, imageUrl);
+                        return;
+                    }
                 }
                 
-                // Если не товар, проверяем категорию
-                const category = allCategories.find(c => c[0] === hash);
-                if (category) {
-                    showCategory(hash);
-                    return;
+                // Проверяем параметр categoryId
+                if (categoryId) {
+                    const category = allCategories.find(c => c[0] === categoryId);
+                    if (category) {
+                        showCategory(categoryId);
+                        return;
+                    }
                 }
                 
-                // Если ничего не найдено, убираем хеш и показываем главную
-                console.log(`Ни товар, ни категория с ID ${hash} не найдены`);
-                window.history.replaceState({}, '', window.location.pathname + window.location.search);
+                // По умолчанию показываем главную страницу с категориями
+                showMainCategories();
             }
-            
-            // По умолчанию показываем главную страницу с категориями
-            showMainCategories();
-        }
 
         // Функция для обновления счетчика плавающей корзины
         function updateFloatingCartCount() {
@@ -2477,5 +2510,6 @@
     </script>
 </body>
 </html>
+
 
 
