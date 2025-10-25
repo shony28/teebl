@@ -1141,32 +1141,52 @@
         let columnMapping = {};
 
         function getParameterByName(name, url = window.location.href) {
+            // Сначала пробуем получить из query параметров
             name = name.replace(/[\[\]]/g, '\\$&');
-            const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
-            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+            const results = regex.exec(url);
+            
+            if (results && results[2]) {
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            }
+            
+            // Если не найдено в query, пробуем извлечь из красивого URL
+            const path = new URL(url).pathname;
+            if (path.includes('/shop/')) {
+                const parts = path.split('/');
+                const index = parts.indexOf(name);
+                if (index !== -1 && index + 1 < parts.length) {
+                    return decodeURIComponent(parts[index + 1]);
+                }
+            }
+            
+            return null;
         }
 
 
         // Функція для роботи з URL-параметрами
         function updateURL(params) {
-            const url = new URL(window.location);
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
             
-            // Очищаємо старі параметри товарів/категорій
-            url.searchParams.delete('goodsId');
-            url.searchParams.delete('categoryId');
-            url.searchParams.delete('pageId');
+            // Формируем красивый URL
+            let pathParts = ['/shop'];
             
-            // Додаємо нові параметри
-            Object.keys(params).forEach(key => {
-                if (params[key]) {
-                    url.searchParams.set(key, params[key]);
-                }
-            });
+            // Всегда добавляем id первым
+            if (spreadsheetId) {
+                pathParts.push('id', encodeURIComponent(spreadsheetId));
+            }
             
-            window.history.pushState({}, '', url);
+            // Добавляем другие параметры
+            if (params.goodsId) {
+                pathParts.push('goodsId', encodeURIComponent(params.goodsId));
+            } else if (params.categoryId) {
+                pathParts.push('categoryId', encodeURIComponent(params.categoryId));
+            } else if (params.pageId) {
+                pathParts.push('pageId', encodeURIComponent(params.pageId));
+            }
+            
+            const newPath = pathParts.join('/');
+            window.history.pushState({}, '', newPath);
         }
 
         // Функция для выполнения fetch с повторными попытками
@@ -1818,22 +1838,27 @@
             const currentCategory = allCategories.find(c => c[0] === categoryId);
             const categoryName = currentCategory ? currentCategory[1] : categoryId;
             
-            // Добавить кнопку "Назад"
-            const backButton = document.createElement('button');
-            backButton.className = 'back-button';
-            backButton.textContent = '← Назад';
-            backButton.onclick = () => {
-                const parentCategory = allCategories.find(c => c[0] === categoryId);
-                if (parentCategory && parentCategory[2]) {
-                    // Если есть родительская категория, переходим к ней
-                    showCategory(parentCategory[2]);
-                } else {
-                    // Иначе на главную
-                    showMainCategories();
-                    window.history.pushState({}, '', window.location.pathname + window.location.search);
+        // Добавить кнопку "Назад"
+        const backButton = document.createElement('button');
+        backButton.className = 'back-button';
+        backButton.textContent = '← Назад';
+        backButton.onclick = () => {
+            const parentCategory = allCategories.find(c => c[0] === categoryId);
+            if (parentCategory && parentCategory[2]) {
+                // Если есть родительская категория, переходим к ней
+                showCategory(parentCategory[2]);
+            } else {
+                // Иначе на главную
+                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                let newPath = '/shop';
+                if (spreadsheetId) {
+                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
                 }
-            };
-            productsContainer.appendChild(backButton);
+                window.history.pushState({}, '', newPath);
+                showMainCategories();
+            }
+        };
+        productsContainer.appendChild(backButton);
             
             // Заголовок категории
             const title = document.createElement('h1');
@@ -1944,12 +1969,15 @@
             }
 
             function goToHome() {
-                // Очищаємо параметри
-                const url = new URL(window.location);
-                url.searchParams.delete('goodsId');
-                url.searchParams.delete('categoryId');
-                url.searchParams.delete('pageId');
-                window.history.pushState({}, '', url);
+                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                
+                // Формируем URL главной страницы
+                let newPath = '/shop';
+                if (spreadsheetId) {
+                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
+                }
+                
+                window.history.pushState({}, '', newPath);
                 
                 // Сбрасываем поиск если есть
                 document.getElementById('search').value = '';
@@ -2004,12 +2032,15 @@
 
 
             function showProductsList() {
-                // Очищаємо параметри
-                const url = new URL(window.location);
-                url.searchParams.delete('goodsId');
-                url.searchParams.delete('categoryId');
-                url.searchParams.delete('pageId');
-                window.history.pushState({}, '', url);
+                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                
+                // Формируем URL главной страницы
+                let newPath = '/shop';
+                if (spreadsheetId) {
+                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
+                }
+                
+                window.history.pushState({}, '', newPath);
                 
                 // Показываем главную страницу с категориями
                 showMainCategories();
