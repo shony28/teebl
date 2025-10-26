@@ -1012,7 +1012,7 @@
 <body>
     <div class="header-top">
         <div class="header-top__logo" onclick="goToHome()">
-            <img class="header-top__logo2" alt="Logo" />
+            <!-- Убираем img, оставляем контейнер пустым -->
         </div>
         
         <!-- Бургер меню кнопка -->
@@ -1688,15 +1688,15 @@
             if (logoContainer) {
                 if (settingsData.logoUrl) {
                     // Если есть URL логотипа, показываем изображение
-                    logoContainer.innerHTML = `<img class="header-top__logo2" src="${settingsData.logoUrl}" alt="Logo" />`;
+                    logoContainer.innerHTML = `<img class="header-top__logo2" src="${settingsData.logoUrl}" alt="Logo" onerror="this.style.display='none'" />`;
                     console.log('Застосовано URL логотипу:', settingsData.logoUrl);
                 } else if (settingsData.logoTitle) {
                     // Если нет URL, но есть текст, показываем текст
                     logoContainer.innerHTML = `<span class="header-top__logo-text">${settingsData.logoTitle}</span>`;
                     console.log('Застосовано текст логотипу:', settingsData.logoTitle);
                 } else {
-                    // По умолчанию используем logo.png
-                    logoContainer.innerHTML = `<img class="header-top__logo2" src="logo.png" alt="Logo" />`;
+                    // По умолчанию показываем текст или оставляем пустым
+                    logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
                 }
             }
         }
