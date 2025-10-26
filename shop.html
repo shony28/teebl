@@ -1151,10 +1151,25 @@
                 return decodeURIComponent(results[2].replace(/\+/g, ' '));
             }
             
-            // Если не найдено в query, пробуем извлечь из красивого URL
+            // Извлекаем из красивого URL
             const path = new URL(url).pathname;
-            if (path.includes('/shop/')) {
-                const parts = path.split('/');
+            const parts = path.split('/').filter(p => p); // убираем пустые элементы
+            
+            // Проверяем старый формат /shop/id/...
+            if (parts[0] === 'shop') {
+                const index = parts.indexOf(name);
+                if (index !== -1 && index + 1 < parts.length) {
+                    return decodeURIComponent(parts[index + 1]);
+                }
+            }
+            
+            // Новый формат: первый элемент это id (если не 'shop')
+            if (name === 'id' && parts.length > 0 && parts[0] !== 'shop') {
+                return decodeURIComponent(parts[0]);
+            }
+            
+            // Для других параметров в новом формате
+            if (parts.length > 0 && parts[0] !== 'shop') {
                 const index = parts.indexOf(name);
                 if (index !== -1 && index + 1 < parts.length) {
                     return decodeURIComponent(parts[index + 1]);
@@ -1169,12 +1184,12 @@
         function updateURL(params) {
             const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
             
-            // Формируем красивый URL
-            let pathParts = ['/shop'];
+            // Формируем новый красивый URL (без /shop/)
+            let pathParts = [];
             
             // Всегда добавляем id первым
             if (spreadsheetId) {
-                pathParts.push('id', encodeURIComponent(spreadsheetId));
+                pathParts.push(encodeURIComponent(spreadsheetId));
             }
             
             // Добавляем другие параметры
@@ -1186,7 +1201,7 @@
                 pathParts.push('pageId', encodeURIComponent(params.pageId));
             }
             
-            const newPath = pathParts.join('/');
+            const newPath = '/' + pathParts.join('/');
             window.history.pushState({}, '', newPath);
         }
 
@@ -2023,10 +2038,10 @@
             function goToHome() {
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
                 
-                // Формируем URL главной страницы
-                let newPath = '/shop';
+                // Формируем URL главной страницы (новый формат)
+                let newPath = '/';
                 if (spreadsheetId) {
-                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
+                    newPath += encodeURIComponent(spreadsheetId);
                 }
                 
                 window.history.pushState({}, '', newPath);
@@ -2083,26 +2098,26 @@
 
 
 
-            function showProductsList() {
-                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-                
-                // Формируем URL главной страницы
-                let newPath = '/shop';
-                if (spreadsheetId) {
-                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
-                }
-                
-                window.history.pushState({}, '', newPath);
-                
-                // Показываем главную страницу с категориями
-                showMainCategories();
-                
-                // Скрываем страницу товара
-                document.getElementById('product-page').classList.remove('active');
-                
-                // Прокручиваем к началу страницы
-                window.scrollTo(0, 0);
+        function showProductsList() {
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+            
+            // Формируем URL главной страницы (новый формат)
+            let newPath = '/';
+            if (spreadsheetId) {
+                newPath += encodeURIComponent(spreadsheetId);
             }
+            
+            window.history.pushState({}, '', newPath);
+            
+            // Показываем главную страницу с категориями
+            showMainCategories();
+            
+            // Скрываем страницу товара
+            document.getElementById('product-page').classList.remove('active');
+            
+            // Прокручиваем к началу страницы
+            window.scrollTo(0, 0);
+        }
 
 
 
