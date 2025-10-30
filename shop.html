@@ -1184,11 +1184,11 @@
         function updateURL(params) {
             const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
             
-            // Формируем новый красивый URL (без /shop/)
+            // Формируем новый красивый URL
             let pathParts = [];
             
-            // Всегда добавляем id первым
-            if (spreadsheetId) {
+            // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID (т.е. берется из URL)
+            if (!SPREADSHEET_ID && spreadsheetId) {
                 pathParts.push(encodeURIComponent(spreadsheetId));
             }
             
@@ -1204,6 +1204,7 @@
             const newPath = '/' + pathParts.join('/');
             window.history.pushState({}, '', newPath);
         }
+
 
         // Функция для выполнения fetch с повторными попытками
         async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
@@ -1917,10 +1918,13 @@
             } else {
                 // Иначе на главную
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-                let newPath = '/shop';
-                if (spreadsheetId) {
-                    newPath += '/id/' + encodeURIComponent(spreadsheetId);
+                let newPath = '/';
+                
+                // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID
+                if (!SPREADSHEET_ID && spreadsheetId) {
+                    newPath += encodeURIComponent(spreadsheetId);
                 }
+                
                 window.history.pushState({}, '', newPath);
                 showMainCategories();
             }
@@ -2038,9 +2042,11 @@
             function goToHome() {
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
                 
-                // Формируем URL главной страницы (новый формат)
+                // Формируем URL главной страницы
                 let newPath = '/';
-                if (spreadsheetId) {
+                
+                // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID
+                if (!SPREADSHEET_ID && spreadsheetId) {
                     newPath += encodeURIComponent(spreadsheetId);
                 }
                 
@@ -2098,26 +2104,28 @@
 
 
 
-        function showProductsList() {
-            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-            
-            // Формируем URL главной страницы (новый формат)
-            let newPath = '/';
-            if (spreadsheetId) {
-                newPath += encodeURIComponent(spreadsheetId);
+            function showProductsList() {
+                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                
+                // Формируем URL главной страницы
+                let newPath = '/';
+                
+                // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID
+                if (!SPREADSHEET_ID && spreadsheetId) {
+                    newPath += encodeURIComponent(spreadsheetId);
+                }
+                
+                window.history.pushState({}, '', newPath);
+                
+                // Показываем главную страницу с категориями
+                showMainCategories();
+                
+                // Скрываем страницу товара
+                document.getElementById('product-page').classList.remove('active');
+                
+                // Прокручиваем к началу страницы
+                window.scrollTo(0, 0);
             }
-            
-            window.history.pushState({}, '', newPath);
-            
-            // Показываем главную страницу с категориями
-            showMainCategories();
-            
-            // Скрываем страницу товара
-            document.getElementById('product-page').classList.remove('active');
-            
-            // Прокручиваем к началу страницы
-            window.scrollTo(0, 0);
-        }
 
 
 
