@@ -1130,6 +1130,7 @@
         const RETRY_DELAY = 2000;
         const PAGES_RANGE = 'pages!A2:B';
         const ALIASES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS90r90sxq0VCLBYX9V-p3OWXyV7y2Zm2CjLcqz0yaWvsJV04s_5LgihNciNBDy4iug3Yl7dEaHd40C/pub?gid=0&single=true&output=csv';
+        const ORDERS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCDmakimgQtqskGLcjXlGkt4YaQsVsx9CBZl9ekywtptEK0l0GFSYAFDTSdi9LxpZ98A/exec';
         let allCategories = [];
         let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
@@ -2386,10 +2387,16 @@
 
             const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
             const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            const message = `Ваше замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
+            const message = `Нове замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
 
+            // Показываем индикатор загрузки
+            const originalButtonText = document.querySelector('#cart button[onclick="placeOrder()"]').textContent;
+            document.querySelector('#cart button[onclick="placeOrder()"]').textContent = 'Оформлення...';
+            document.querySelector('#cart button[onclick="placeOrder()"]').disabled = true;
+
+            // Отправка в Telegram
             const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            fetch(telegramUrl, {
+            const telegramPromise = fetch(telegramUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2398,27 +2405,54 @@
                     chat_id: TELEGRAM_CHAT_ID,
                     text: message,
                 }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.ok) {
-                    alert('Замовлення оформлено');
-                    cart = [];
-                    renderCart();
-                    saveCart();
-                    document.getElementById('phone').value = '';
-                    document.getElementById('buyer').value = '';
-                    document.getElementById('delivery').value = '';
-                    toggleCart();
-                } else {
-                    console.error('Помилка Telegram API:', data);
-                    alert('Помилка при відправці замовлення в Telegram.');
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка', error);
-                alert('Ошибка при отправке заказа.');
-            });
+            }).then(response => response.json());
+
+            // Отправка в Google Таблицу
+            const ordersPromise = fetch(ORDERS_WEB_APP_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: phone,
+                    buyer: buyer,
+                    delivery: delivery,
+                    orderDetails: orderDetails,
+                    totalPrice: totalPrice
+                }),
+            }).then(response => response.json());
+
+            // Ждем выполнения обоих запросов
+            Promise.all([telegramPromise, ordersPromise])
+                .then(([telegramData, ordersData]) => {
+                    if (telegramData.ok && ordersData.success) {
+                        alert('Замовлення оформлено');
+                        cart = [];
+                        renderCart();
+                        saveCart();
+                        document.getElementById('phone').value = '';
+                        document.getElementById('buyer').value = '';
+                        document.getElementById('delivery').value = '';
+                        toggleCart();
+                    } else {
+                        console.error('Помилка:', { telegram: telegramData, orders: ordersData });
+                        if (!telegramData.ok) {
+                            alert('Помилка при відправці замовлення в Telegram.');
+                        }
+                        if (!ordersData.success) {
+                            alert('Помилка при збереженні замовлення в таблицю.');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Помилка:', error);
+                    alert('Помилка при оформленні замовлення.');
+                })
+                .finally(() => {
+                    // Восстанавливаем кнопку
+                    document.querySelector('#cart button[onclick="placeOrder()"]').textContent = originalButtonText;
+                    document.querySelector('#cart button[onclick="placeOrder()"]').disabled = false;
+                });
         }
 
         function saveCart() {
@@ -2616,7 +2650,6 @@
     </script>
 </body>
 </html>
-
 
 
 
