@@ -2390,9 +2390,10 @@
             const message = `Нове замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
 
             // Показываем индикатор загрузки
-            const originalButtonText = document.querySelector('#cart button[onclick="placeOrder()"]').textContent;
-            document.querySelector('#cart button[onclick="placeOrder()"]').textContent = 'Оформлення...';
-            document.querySelector('#cart button[onclick="placeOrder()"]').disabled = true;
+            const orderButton = document.querySelector('#cart button[onclick="placeOrder()"]');
+            const originalButtonText = orderButton.textContent;
+            orderButton.textContent = 'Оформлення...';
+            orderButton.disabled = true;
 
             // Отправка в Telegram
             const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -2407,20 +2408,8 @@
                 }),
             }).then(response => response.json());
 
-            // Отправка в Google Таблицу
-            const ordersPromise = fetch(ORDERS_WEB_APP_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    phone: phone,
-                    buyer: buyer,
-                    delivery: delivery,
-                    orderDetails: orderDetails,
-                    totalPrice: totalPrice
-                }),
-            }).then(response => response.json());
+            // Отправка в Google Таблицу через скрытую форму (обход CORS)
+            const ordersPromise = sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice);
 
             // Ждем выполнения обоих запросов
             Promise.all([telegramPromise, ordersPromise])
@@ -2438,8 +2427,7 @@
                         console.error('Помилка:', { telegram: telegramData, orders: ordersData });
                         if (!telegramData.ok) {
                             alert('Помилка при відправці замовлення в Telegram.');
-                        }
-                        if (!ordersData.success) {
+                        } else if (!ordersData.success) {
                             alert('Помилка при збереженні замовлення в таблицю.');
                         }
                     }
@@ -2450,9 +2438,60 @@
                 })
                 .finally(() => {
                     // Восстанавливаем кнопку
-                    document.querySelector('#cart button[onclick="placeOrder()"]').textContent = originalButtonText;
-                    document.querySelector('#cart button[onclick="placeOrder()"]').disabled = false;
+                    orderButton.textContent = originalButtonText;
+                    orderButton.disabled = false;
                 });
+        }
+
+        function sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice) {
+            return new Promise((resolve) => {
+                try {
+                    // Создаем скрытый iframe для отправки
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.name = 'orders-iframe';
+                    document.body.appendChild(iframe);
+
+                    // Создаем форму
+                    const form = document.createElement('form');
+                    form.target = 'orders-iframe';
+                    form.method = 'POST';
+                    form.action = ORDERS_WEB_APP_URL;
+
+                    // Добавляем поля
+                    const fields = {
+                        phone: phone,
+                        buyer: buyer,
+                        delivery: delivery,
+                        orderDetails: orderDetails,
+                        totalPrice: totalPrice
+                    };
+
+                    for (const [key, value] of Object.entries(fields)) {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = value;
+                        form.appendChild(input);
+                    }
+
+                    document.body.appendChild(form);
+                    
+                    // Отправляем форму
+                    form.submit();
+
+                    // Ждем немного и считаем успешным
+                    setTimeout(() => {
+                        document.body.removeChild(form);
+                        document.body.removeChild(iframe);
+                        resolve({ success: true });
+                    }, 1500);
+
+                } catch (error) {
+                    console.error('Помилка відправки в Google Sheet:', error);
+                    resolve({ success: false, error: error.toString() });
+                }
+            });
         }
 
         function saveCart() {
