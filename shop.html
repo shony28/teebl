@@ -2593,6 +2593,14 @@
         }
 
         function sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice) {
+            console.log('Отправка в Google Sheet:', {
+                phone: phone,
+                buyer: buyer,
+                delivery: delivery,
+                orderDetails: orderDetails,
+                totalPrice: totalPrice
+            });
+            
             return new Promise((resolve) => {
                 try {
                     // Создаем скрытый iframe для отправки
@@ -2622,6 +2630,7 @@
                         input.name = key;
                         input.value = value;
                         form.appendChild(input);
+                        console.log(`Добавлено поле: ${key} = ${value}`);
                     }
 
                     document.body.appendChild(form);
