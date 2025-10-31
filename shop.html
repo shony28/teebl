@@ -2391,20 +2391,25 @@
                 });
             }
 
-            // Добавляем информацию о доставке, если она выбрана и имеет стоимость
+            // Формируем информацию о доставке и итоговой сумме
             const deliverySelect = document.getElementById('delivery');
-            let deliveryInfoHtml = '';
+            let summaryHtml = '';
             
+            // 1. Выбранная доставка и стоимость доставки
             if (deliveryCost > 0 && deliverySelect.value) {
                 const deliveryName = deliverySelect.value.split(':')[0];
-                deliveryInfoHtml = `<p style="margin: 10px 0; font-size: 14px; color: #333;">${deliveryName}: ${deliveryCost.toFixed(2)} грн</p>`;
+                summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
             }
             
-            // Вычисляем общую сумму с доставкой
+            // 2. Сумма общая
             const totalWithDelivery = totalPrice + deliveryCost;
+            summaryHtml += `Сума: ${totalWithDelivery.toFixed(2)} грн<br>`;
             
-            // Обновляем отображение цены
-            totalPriceElement.innerHTML = deliveryInfoHtml + totalWithDelivery.toFixed(2);
+            // 3. Загальна кількість товарів
+            summaryHtml += `Загальна кількість товарів: ${totalQuantity}`;
+            
+            // Обновляем отображение
+            totalPriceElement.innerHTML = summaryHtml;
             totalQuantityElement.innerText = totalQuantity;
             document.getElementById('cart-count').innerText = totalQuantity;
             
