@@ -2496,18 +2496,23 @@
             const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
             const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
             
-            // Получаем название доставки и стоимость
+            // Получаем название доставки
             const deliveryName = delivery.includes(':') ? delivery.split(':')[0] : delivery;
-            const deliveryCostValue = delivery.includes(':') ? parseFloat(delivery.split(':')[1]) : 0;
+            
+            // Используем уже рассчитанную стоимость доставки из переменной deliveryCost
+            const actualDeliveryCost = deliveryCost;
             
             // Формируем сообщение
             let message = `Нове замовлення:\n${orderDetails}\n\n`;
             
-            if (deliveryCostValue > 0) {
-                message += `${deliveryName}: ${deliveryCostValue} грн\n`;
+            if (actualDeliveryCost > 0) {
+                message += `${deliveryName}: ${actualDeliveryCost} грн\n`;
+            } else if (delivery.includes(':')) {
+                // Если доставка была бесплатной по условию
+                message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
             }
             
-            const totalWithDelivery = totalPrice + deliveryCostValue;
+            const totalWithDelivery = totalPrice + actualDeliveryCost;
             message += `Сума: ${totalWithDelivery.toFixed(2)} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${deliveryName}`;
 
             // Показываем индикатор загрузки
