@@ -1142,6 +1142,7 @@
         let currentPageId = null;
         let columnMapping = {};
         let ORDERS_WEB_APP_URL = '';
+        let deliveryCost = 0;
 
         function getParameterByName(name, url = window.location.href) {
             // Сначала пробуем получить из query параметров
@@ -1374,6 +1375,24 @@
                 }
             }
         }
+
+
+        function updateDeliveryCost() {
+            const deliverySelect = document.getElementById('delivery');
+            const selectedValue = deliverySelect.value;
+            
+            // Проверяем, есть ли стоимость доставки
+            if (selectedValue.includes(':')) {
+                const [, cost] = selectedValue.split(':');
+                deliveryCost = parseFloat(cost) || 0;
+            } else {
+                deliveryCost = 0;
+            }
+            
+            // Обновляем отображение корзины
+            renderCart();
+        }
+
 
         function getColumnMapping(headerRow) {
     const mapping = {};
@@ -1624,6 +1643,7 @@
         }
         
         
+        
         // Применение настроек к интерфейсу
         function applySettings() {
             // Применение текста для кнопки добавления в корзину
@@ -1682,11 +1702,23 @@
                         const trimmedText = optionText.trim();
                         if (trimmedText) {
                             const option = document.createElement('option');
-                            option.value = trimmedText;
-                            option.textContent = trimmedText;
+                            
+                            // Проверяем, есть ли стоимость доставки после ":"
+                            if (trimmedText.includes(':')) {
+                                const [deliveryName, deliveryCost] = trimmedText.split(':').map(s => s.trim());
+                                option.value = `${deliveryName}:${deliveryCost}`;
+                                option.textContent = `${deliveryName} ${deliveryCost} грн`;
+                            } else {
+                                option.value = trimmedText;
+                                option.textContent = trimmedText;
+                            }
+                            
                             deliverySelect.appendChild(option);
                         }
                     });
+                    
+                    // Добавляем обработчик изменения доставки
+                    deliverySelect.addEventListener('change', updateDeliveryCost);
                     
                     console.log('Застосовано налаштування доставки:', settingsData.deliverySelect);
                 }
@@ -2359,7 +2391,20 @@
                 });
             }
 
-            totalPriceElement.innerText = totalPrice.toFixed(2);
+            // Добавляем информацию о доставке, если она выбрана и имеет стоимость
+            const deliverySelect = document.getElementById('delivery');
+            let deliveryInfoHtml = '';
+            
+            if (deliveryCost > 0 && deliverySelect.value) {
+                const deliveryName = deliverySelect.value.split(':')[0];
+                deliveryInfoHtml = `<p style="margin: 10px 0; font-size: 14px; color: #333;">${deliveryName}: ${deliveryCost.toFixed(2)} грн</p>`;
+            }
+            
+            // Вычисляем общую сумму с доставкой
+            const totalWithDelivery = totalPrice + deliveryCost;
+            
+            // Обновляем отображение цены
+            totalPriceElement.innerHTML = deliveryInfoHtml + totalWithDelivery.toFixed(2);
             totalQuantityElement.innerText = totalQuantity;
             document.getElementById('cart-count').innerText = totalQuantity;
             
@@ -2394,7 +2439,20 @@
 
             const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
             const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            const message = `Нове замовлення:\n${orderDetails}\n\nСума: ${totalPrice} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${delivery}`;
+            
+            // Получаем название доставки и стоимость
+            const deliveryName = delivery.includes(':') ? delivery.split(':')[0] : delivery;
+            const deliveryCostValue = delivery.includes(':') ? parseFloat(delivery.split(':')[1]) : 0;
+            
+            // Формируем сообщение
+            let message = `Нове замовлення:\n${orderDetails}\n\n`;
+            
+            if (deliveryCostValue > 0) {
+                message += `${deliveryName}: ${deliveryCostValue} грн\n`;
+            }
+            
+            const totalWithDelivery = totalPrice + deliveryCostValue;
+            message += `Сума: ${totalWithDelivery.toFixed(2)} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${deliveryName}`;
 
             // Показываем индикатор загрузки
             const orderButton = document.querySelector('#cart button[onclick="placeOrder()"]');
@@ -2421,7 +2479,7 @@
             
             if (shouldSendToGoogleSheet) {
                 // Отправка в Google Таблицу через скрытую форму (обход CORS)
-                const ordersPromise = sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice);
+                const ordersPromise = sendToGoogleSheet(phone, buyer, deliveryName, orderDetails, totalWithDelivery);
                 promises.push(ordersPromise);
             }
 
@@ -2434,6 +2492,7 @@
                     if (telegramData.ok && ordersData.success) {
                         alert('Замовлення оформлено');
                         cart = [];
+                        deliveryCost = 0;
                         renderCart();
                         saveCart();
                         document.getElementById('phone').value = '';
@@ -2706,6 +2765,7 @@
     </script>
 </body>
 </html>
+
 
 
 
