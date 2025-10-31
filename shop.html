@@ -1111,7 +1111,7 @@
                     </select>
                 </div>
                 <div class="order-summary">
-                    <p>Сума11: <span id="total-price">0</span> грн</p>
+                    <p>Доставка <span id="total-price">0</span> грн</p>
                     <p>Загальна кількість товарів: <span id="total-quantity">0</span></p>
                 </div>
                 <button id="place-order" onclick="placeOrder()">Оформити замовлення</button>
@@ -2405,7 +2405,7 @@
             
             // 2. Сумма общая
             const totalWithDelivery = totalPrice + deliveryCost;
-            summaryHtml += `Сума1: ${totalWithDelivery.toFixed(2)} грн`;
+            summaryHtml += `Сума: ${totalWithDelivery.toFixed(2)} грн`;
             
             totalPriceElement.innerHTML = summaryHtml;
             
