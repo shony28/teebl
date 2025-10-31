@@ -1143,6 +1143,7 @@
         let columnMapping = {};
         let ORDERS_WEB_APP_URL = '';
         let deliveryCost = 0;
+        let freeDeliveryRules = {};
 
         function getParameterByName(name, url = window.location.href) {
             // Сначала пробуем получить из query параметров
@@ -1383,8 +1384,23 @@
             
             // Проверяем, есть ли стоимость доставки
             if (selectedValue.includes(':')) {
-                const [, cost] = selectedValue.split(':');
-                deliveryCost = parseFloat(cost) || 0;
+                const [deliveryName, cost] = selectedValue.split(':');
+                const baseCost = parseFloat(cost) || 0;
+                
+                // Проверяем, есть ли правило бесплатной доставки для этой доставки
+                if (freeDeliveryRules[deliveryName]) {
+                    const freeFromAmount = freeDeliveryRules[deliveryName];
+                    const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                    
+                    // Если сумма корзины >= минимальной суммы для бесплатной доставки
+                    if (cartTotal >= freeFromAmount) {
+                        deliveryCost = 0;
+                    } else {
+                        deliveryCost = baseCost;
+                    }
+                } else {
+                    deliveryCost = baseCost;
+                }
             } else {
                 deliveryCost = 0;
             }
@@ -1678,6 +1694,20 @@
                 }
                 
                 console.log('Застосовано цветову схему:', settingsData.styleColor);
+            }
+            
+            // Парсинг настройки freeDeliveryFromAmount
+            if (settingsData.freeDeliveryFromAmount) {
+                freeDeliveryRules = {};
+                const rules = settingsData.freeDeliveryFromAmount.split(';');
+                rules.forEach(rule => {
+                    const trimmedRule = rule.trim();
+                    if (trimmedRule && trimmedRule.includes(':')) {
+                        const [deliveryName, amount] = trimmedRule.split(':').map(s => s.trim());
+                        freeDeliveryRules[deliveryName] = parseFloat(amount) || 0;
+                    }
+                });
+                console.log('Застосовано правила безкоштовної доставки:', freeDeliveryRules);
             }
             
             // Применение настроек для выпадающего списка доставки
@@ -2325,6 +2355,7 @@
             const itemIndex = cart.findIndex(item => item.id === id);
             if (itemIndex >= 0) {
                 cart[itemIndex].quantity += 1;
+                updateDeliveryCost(); // Добавляем пересчет доставки
                 renderCart();
                 saveCart();
             }
@@ -2337,6 +2368,7 @@
                 if (cart[itemIndex].quantity === 0) {
                     cart.splice(itemIndex, 1);
                 }
+                updateDeliveryCost(); // Добавляем пересчет доставки
                 renderCart();
                 saveCart();
             }
@@ -2398,9 +2430,26 @@
             let summaryHtml = '';
             
             // 1. Выбранная доставка и стоимость доставки
-            if (deliveryCost > 0 && deliverySelect.value) {
+            if (deliverySelect.value) {
                 const deliveryName = deliverySelect.value.split(':')[0];
-                summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
+                
+                // Проверяем, действует ли бесплатная доставка
+                if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
+                    summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
+                } else if (deliveryCost > 0) {
+                    summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
+                    
+                    // Показываем, сколько осталось до бесплатной доставки
+                    if (freeDeliveryRules[deliveryName]) {
+                        const remaining = freeDeliveryRules[deliveryName] - totalPrice;
+                        if (remaining > 0) {
+                            summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                        }
+                    }
+                } else if (deliveryCost === 0 && deliverySelect.value.includes(':')) {
+                    // Бесплатная доставка по условию
+                    summaryHtml += `${deliveryName}: 0 грн<br>`;
+                }
             }
             
             // 2. Сумма общая
@@ -2772,6 +2821,7 @@
     </script>
 </body>
 </html>
+
 
 
 
