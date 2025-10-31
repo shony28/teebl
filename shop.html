@@ -2393,6 +2393,8 @@
 
             // Формируем информацию о доставке и итоговой сумме
             const deliverySelect = document.getElementById('delivery');
+            
+            // Обновляем только totalPriceElement (он содержит всю информацию)
             let summaryHtml = '';
             
             // 1. Выбранная доставка и стоимость доставки
@@ -2403,14 +2405,14 @@
             
             // 2. Сумма общая
             const totalWithDelivery = totalPrice + deliveryCost;
-            summaryHtml += `Сума: ${totalWithDelivery.toFixed(2)} грн<br>`;
+            summaryHtml += `Сума: ${totalWithDelivery.toFixed(2)} грн`;
             
-            // 3. Загальна кількість товарів
-            summaryHtml += `Загальна кількість товарів: ${totalQuantity}`;
-            
-            // Обновляем отображение
             totalPriceElement.innerHTML = summaryHtml;
+            
+            // 3. Загальна кількість товарів (обновляем отдельный элемент)
             totalQuantityElement.innerText = totalQuantity;
+            
+            // Обновляем счетчик в иконке корзины
             document.getElementById('cart-count').innerText = totalQuantity;
             
             // Обновляем плавающую корзину
