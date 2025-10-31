@@ -1130,7 +1130,7 @@
         const RETRY_DELAY = 2000;
         const PAGES_RANGE = 'pages!A2:B';
         const ALIASES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS90r90sxq0VCLBYX9V-p3OWXyV7y2Zm2CjLcqz0yaWvsJV04s_5LgihNciNBDy4iug3Yl7dEaHd40C/pub?gid=0&single=true&output=csv';
-        const ORDERS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzCDmakimgQtqskGLcjXlGkt4YaQsVsx9CBZl9ekywtptEK0l0GFSYAFDTSdi9LxpZ98A/exec';
+        
         let allCategories = [];
         let currentCategoryId = null; // для отслеживания текущей категории
         let cart = [];
@@ -1141,6 +1141,7 @@
         let allPages = [];
         let currentPageId = null;
         let columnMapping = {};
+        let ORDERS_WEB_APP_URL = '';
 
         function getParameterByName(name, url = window.location.href) {
             // Сначала пробуем получить из query параметров
@@ -1639,6 +1640,12 @@
             if (settingsData.telegramChatId) {
                 TELEGRAM_CHAT_ID = settingsData.telegramChatId;
                 console.log('Застосовано Telegram Chat ID:', settingsData.telegramChatId);
+            }
+            
+            // Применение OrdersWebAppUrl
+            if (settingsData.OrdersWebAppUrl) {
+                ORDERS_WEB_APP_URL = settingsData.OrdersWebAppUrl;
+                console.log('Застосовано Orders Web App URL:', settingsData.OrdersWebAppUrl);
             }
             
             // Применение цветовой схемы
@@ -2408,12 +2415,22 @@
                 }),
             }).then(response => response.json());
 
-            // Отправка в Google Таблицу через скрытую форму (обход CORS)
-            const ordersPromise = sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice);
+            // Проверяем, нужно ли отправлять в Google Таблицу
+            const promises = [telegramPromise];
+            const shouldSendToGoogleSheet = ORDERS_WEB_APP_URL && ORDERS_WEB_APP_URL.trim() !== '';
+            
+            if (shouldSendToGoogleSheet) {
+                // Отправка в Google Таблицу через скрытую форму (обход CORS)
+                const ordersPromise = sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice);
+                promises.push(ordersPromise);
+            }
 
-            // Ждем выполнения обоих запросов
-            Promise.all([telegramPromise, ordersPromise])
-                .then(([telegramData, ordersData]) => {
+            // Ждем выполнения всех запросов
+            Promise.all(promises)
+                .then((results) => {
+                    const telegramData = results[0];
+                    const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
+                    
                     if (telegramData.ok && ordersData.success) {
                         alert('Замовлення оформлено');
                         cart = [];
