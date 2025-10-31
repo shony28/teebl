@@ -1739,6 +1739,7 @@
                                 option.value = `${deliveryName}:${deliveryCost}`;
                                 option.textContent = `${deliveryName} ${deliveryCost} грн`;
                             } else {
+                                // Если нет стоимости, просто используем название без добавления "0 грн"
                                 option.value = trimmedText;
                                 option.textContent = trimmedText;
                             }
@@ -2431,25 +2432,28 @@
             
             // 1. Выбранная доставка и стоимость доставки
             if (deliverySelect.value) {
-                const deliveryName = deliverySelect.value.split(':')[0];
+                const deliveryName = deliverySelect.value.includes(':') 
+                    ? deliverySelect.value.split(':')[0] 
+                    : deliverySelect.value;
                 
-                // Проверяем, действует ли бесплатная доставка
-                if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
-                    summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
-                } else if (deliveryCost > 0) {
-                    summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
-                    
-                    // Показываем, сколько осталось до бесплатной доставки
-                    if (freeDeliveryRules[deliveryName]) {
-                        const remaining = freeDeliveryRules[deliveryName] - totalPrice;
-                        if (remaining > 0) {
-                            summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                // Проверяем, есть ли стоимость доставки
+                if (deliverySelect.value.includes(':')) {
+                    // Проверяем, действует ли бесплатная доставка
+                    if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
+                        summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
+                    } else if (deliveryCost > 0) {
+                        summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
+                        
+                        // Показываем, сколько осталось до бесплатной доставки
+                        if (freeDeliveryRules[deliveryName]) {
+                            const remaining = freeDeliveryRules[deliveryName] - totalPrice;
+                            if (remaining > 0) {
+                                summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                            }
                         }
                     }
-                } else if (deliveryCost === 0 && deliverySelect.value.includes(':')) {
-                    // Бесплатная доставка по условию
-                    summaryHtml += `${deliveryName}: 0 грн<br>`;
                 }
+                // Если доставка без стоимости (например "Самовивіз"), ничего не добавляем в summaryHtml
             }
             
             // 2. Сумма общая
@@ -2507,9 +2511,10 @@
             if (actualDeliveryCost > 0) {
                 deliveryInfo = `${deliveryName}: ${actualDeliveryCost} грн`;
             } else if (delivery.includes(':')) {
-                // Если доставка была бесплатной по условию
+                // Если доставка была бесплатной по условию (была стоимость, но применилось правило)
                 deliveryInfo = `${deliveryName}: 0 грн (Безкоштовно)`;
             } else {
+                // Если доставка без стоимости изначально (например "Самовивіз")
                 deliveryInfo = deliveryName;
             }
             
@@ -2522,6 +2527,7 @@
                 // Если доставка была бесплатной по условию
                 message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
             }
+            // Если доставка без стоимости, не добавляем строку с ценой
             
             const totalWithDelivery = totalPrice + actualDeliveryCost;
             message += `Сума: ${totalWithDelivery.toFixed(2)} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${deliveryName}`;
