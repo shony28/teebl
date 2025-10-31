@@ -2502,7 +2502,18 @@
             // Используем уже рассчитанную стоимость доставки из переменной deliveryCost
             const actualDeliveryCost = deliveryCost;
             
-            // Формируем сообщение
+            // Формируем строку доставки для передачи в таблицу
+            let deliveryInfo = '';
+            if (actualDeliveryCost > 0) {
+                deliveryInfo = `${deliveryName}: ${actualDeliveryCost} грн`;
+            } else if (delivery.includes(':')) {
+                // Если доставка была бесплатной по условию
+                deliveryInfo = `${deliveryName}: 0 грн (Безкоштовно)`;
+            } else {
+                deliveryInfo = deliveryName;
+            }
+            
+            // Формируем сообщение для Telegram
             let message = `Нове замовлення:\n${orderDetails}\n\n`;
             
             if (actualDeliveryCost > 0) {
@@ -2540,7 +2551,8 @@
             
             if (shouldSendToGoogleSheet) {
                 // Отправка в Google Таблицу через скрытую форму (обход CORS)
-                const ordersPromise = sendToGoogleSheet(phone, buyer, deliveryName, orderDetails, totalWithDelivery);
+                // Передаем deliveryInfo вместо deliveryName
+                const ordersPromise = sendToGoogleSheet(phone, buyer, deliveryInfo, orderDetails, totalWithDelivery);
                 promises.push(ordersPromise);
             }
 
