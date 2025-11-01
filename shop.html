@@ -1784,10 +1784,8 @@
                     logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
                 }
             }
-            // Рендерим корзину после применения настроек, если в ней есть товары
-            if (cart.length > 0) {
-                renderCart();
-            }
+            // Рендерим корзину после применения настроек всегда (не только если есть товары)
+            renderCart();
         }
         
 
@@ -2964,12 +2962,16 @@
         }
 
         function loadCart() {
-                const storedCart = localStorage.getItem('cart');
-                if (storedCart) {
-                    cart = JSON.parse(storedCart);
-                    // Не рендерим корзину сразу, только после загрузки настроек
-                }
+            const storedCart = localStorage.getItem('cart');
+            if (storedCart) {
+                cart = JSON.parse(storedCart);
             }
+            // Всегда рендерим корзину после загрузки, даже если она пустая
+            // Это обеспечит отображение полей формы заказа
+            if (Object.keys(settingsData).length > 0) {
+                renderCart();
+            }
+        }
 
             document.addEventListener('DOMContentLoaded', function() {
                 loadCart();
