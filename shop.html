@@ -1094,29 +1094,15 @@
         </div>
         <div class="cart-container">
             <div id="cart-items"></div>
-            <div id="order-form">
-                <div class="form-group">
-                    <label for="phone">Номер телефону</label>
-                    <input type="tel" id="phone" placeholder="+380XXXXXXXXX" value="+38" maxlength="13">
+                <div id="order-form">
+                    <div id="dynamic-order-fields"></div>
+                    <div class="order-summary">
+                        <p><span id="total-price">0</span></p>
+                        <p>Загальна кількість товарів: <span id="total-quantity">0</span></p>
+                    </div>
+                    <button id="place-order" onclick="placeOrder()">Оформити замовлення</button>
+                    <button class="cart-button" onclick="toggleCart()">Приховати кошик</button>
                 </div>
-                <div class="form-group">
-                    <label for="buyer">Ім'я</label>
-                    <input type="text" id="buyer" placeholder="Введіть ваше ім'я">
-                </div>
-                <div class="form-group">
-                    <label for="delivery">Доставка</label>
-                    <select id="delivery">
-                        <option value="">Виберіть спосіб доставки</option>
-                        
-                    </select>
-                </div>
-                <div class="order-summary">
-                    <p><span id="total-price">0</span></p>
-                    <p>Загальна кількість товарів: <span id="total-quantity">0</span></p>
-                </div>
-                <button id="place-order" onclick="placeOrder()">Оформити замовлення</button>
-                <button class="cart-button" onclick="toggleCart()">Приховати кошик</button>
-            </div>
         </div>
     </div>
     <script>
@@ -1144,6 +1130,7 @@
         let ORDERS_WEB_APP_URL = '';
         let deliveryCost = 0;
         let freeDeliveryRules = {};
+        let orderFields = []; // Массив всех полей для формы заказа
 
         function getParameterByName(name, url = window.location.href) {
             // Сначала пробуем получить из query параметров
@@ -1378,36 +1365,38 @@
         }
 
 
-        function updateDeliveryCost() {
-            const deliverySelect = document.getElementById('delivery');
-            const selectedValue = deliverySelect.value;
-            
-            // Проверяем, есть ли стоимость доставки
-            if (selectedValue.includes(':')) {
-                const [deliveryName, cost] = selectedValue.split(':');
-                const baseCost = parseFloat(cost) || 0;
+            function updateDeliveryCost() {
+                const deliveryElement = document.getElementById('delivery');
+                if (!deliveryElement) return;
                 
-                // Проверяем, есть ли правило бесплатной доставки для этой доставки
-                if (freeDeliveryRules[deliveryName]) {
-                    const freeFromAmount = freeDeliveryRules[deliveryName];
-                    const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                const selectedValue = deliveryElement.value;
+                
+                // Проверяем, есть ли стоимость доставки
+                if (selectedValue.includes(':')) {
+                    const [deliveryName, cost] = selectedValue.split(':');
+                    const baseCost = parseFloat(cost) || 0;
                     
-                    // Если сумма корзины >= минимальной суммы для бесплатной доставки
-                    if (cartTotal >= freeFromAmount) {
-                        deliveryCost = 0;
+                    // Проверяем, есть ли правило бесплатной доставки для этой доставки
+                    if (freeDeliveryRules[deliveryName]) {
+                        const freeFromAmount = freeDeliveryRules[deliveryName];
+                        const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                        
+                        // Если сумма корзины >= минимальной суммы для бесплатной доставки
+                        if (cartTotal >= freeFromAmount) {
+                            deliveryCost = 0;
+                        } else {
+                            deliveryCost = baseCost;
+                        }
                     } else {
                         deliveryCost = baseCost;
                     }
                 } else {
-                    deliveryCost = baseCost;
+                    deliveryCost = 0;
                 }
-            } else {
-                deliveryCost = 0;
+                
+                // Обновляем отображение корзины
+                renderCart();
             }
-            
-            // Обновляем отображение корзины
-            renderCart();
-        }
 
 
         function getColumnMapping(headerRow) {
@@ -1710,49 +1699,10 @@
                 console.log('Застосовано правила безкоштовної доставки:', freeDeliveryRules);
             }
             
-            // Применение настроек для выпадающего списка доставки
-            if (settingsData.deliverySelect) {
-                const deliverySelect = document.getElementById('delivery');
-                if (deliverySelect) {
-                    // Очищаем текущие опции, кроме первой (placeholder)
-                    const firstOption = deliverySelect.querySelector('option[value=""]');
-                    deliverySelect.innerHTML = '';
-                    if (firstOption) {
-                        deliverySelect.appendChild(firstOption);
-                    } else {
-                        const placeholderOption = document.createElement('option');
-                        placeholderOption.value = '';
-                        placeholderOption.textContent = 'Виберіть службу доставки';
-                        deliverySelect.appendChild(placeholderOption);
-                    }
-                    
-                    // Разбиваем строку по символу ";" и создаем опции
-                    const deliveryOptions = settingsData.deliverySelect.split(';');
-                    deliveryOptions.forEach(optionText => {
-                        const trimmedText = optionText.trim();
-                        if (trimmedText) {
-                            const option = document.createElement('option');
-                            
-                            // Проверяем, есть ли стоимость доставки после ":"
-                            if (trimmedText.includes(':')) {
-                                const [deliveryName, deliveryCost] = trimmedText.split(':').map(s => s.trim());
-                                option.value = `${deliveryName}:${deliveryCost}`;
-                                option.textContent = `${deliveryName} ${deliveryCost} грн`;
-                            } else {
-                                // Если нет стоимости, просто используем название без добавления стоимости
-                                option.value = trimmedText;
-                                option.textContent = trimmedText;
-                            }
-                            
-                            deliverySelect.appendChild(option);
-                        }
-                    });
-                    
-                    // Добавляем обработчик изменения доставки
-                    deliverySelect.addEventListener('change', updateDeliveryCost);
-                    
-                    console.log('Застосовано налаштування доставки:', settingsData.deliverySelect);
-                }
+
+               // Парсим и рендерим поля заказа
+                parseOrderFields();
+                renderOrderFields(); 
             }
             
             // Применение логотипа (изображение или текст)
@@ -1771,6 +1721,180 @@
                     logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
                 }
             }
+        }
+
+        function parseOrderFields() {
+            orderFields = [];
+            
+            // Системное поле: телефон (если не отключено)
+            if (settingsData.disablePhoneField !== 'yes') {
+                orderFields.push({
+                    id: 'phone',
+                    type: 'tel',
+                    label: 'Номер телефону',
+                    required: true,
+                    placeholder: '+380XXXXXXXXX',
+                    isSystem: true
+                });
+            }
+            
+            // Парсим кастомные поля из настроек
+            let fieldIndex = 1;
+            while (settingsData[`orderField${fieldIndex}`]) {
+                const fieldConfig = settingsData[`orderField${fieldIndex}`];
+                const parts = fieldConfig.split('|').map(p => p.trim());
+                
+                if (parts.length >= 2) {
+                    const field = {
+                        id: `orderField${fieldIndex}`,
+                        type: parts[0] || 'text',
+                        label: parts[1] || `Поле ${fieldIndex}`,
+                        required: parts[2] === 'yes' || parts[2] === 'true',
+                        placeholder: parts[3] || '',
+                        options: parts[4] ? parts[4].split(';').map(o => o.trim()) : [],
+                        isSystem: false
+                    };
+                    orderFields.push(field);
+                }
+                fieldIndex++;
+            }
+            
+            // Системное поле: доставка (если не отключено)
+            if (settingsData.disableDeliveryField !== 'yes') {
+                orderFields.push({
+                    id: 'delivery',
+                    type: 'select',
+                    label: 'Доставка',
+                    required: true,
+                    placeholder: 'Виберіть спосіб доставки',
+                    options: [],
+                    isSystem: true
+                });
+            }
+            
+            console.log('Поля заказа:', orderFields);
+        }
+
+        //функция рендеринга динамических полей
+        function renderOrderFields() {
+            const container = document.getElementById('dynamic-order-fields');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            orderFields.forEach(field => {
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                
+                const label = document.createElement('label');
+                label.setAttribute('for', field.id);
+                label.textContent = field.label + (field.required ? ' *' : '');
+                formGroup.appendChild(label);
+                
+                let inputElement;
+                
+                switch (field.type) {
+                    case 'select':
+                        inputElement = document.createElement('select');
+                        inputElement.id = field.id;
+                        
+                        // Добавляем placeholder option
+                        const placeholderOption = document.createElement('option');
+                        placeholderOption.value = '';
+                        placeholderOption.textContent = field.placeholder || `Виберіть ${field.label.toLowerCase()}`;
+                        inputElement.appendChild(placeholderOption);
+                        
+                        // Для системного поля delivery используем deliverySelect из настроек
+                        if (field.id === 'delivery' && settingsData.deliverySelect) {
+                            const deliveryOptions = settingsData.deliverySelect.split(';');
+                            deliveryOptions.forEach(optionText => {
+                                const trimmedText = optionText.trim();
+                                if (trimmedText) {
+                                    const option = document.createElement('option');
+                                    if (trimmedText.includes(':')) {
+                                        const [deliveryName, deliveryCost] = trimmedText.split(':').map(s => s.trim());
+                                        option.value = `${deliveryName}:${deliveryCost}`;
+                                        option.textContent = `${deliveryName} ${deliveryCost} грн`;
+                                    } else {
+                                        option.value = trimmedText;
+                                        option.textContent = trimmedText;
+                                    }
+                                    inputElement.appendChild(option);
+                                }
+                            });
+                            // Добавляем обработчик изменения доставки
+                            inputElement.addEventListener('change', updateDeliveryCost);
+                        } else {
+                            // Для кастомных select полей
+                            field.options.forEach(optionText => {
+                                if (optionText) {
+                                    const option = document.createElement('option');
+                                    option.value = optionText;
+                                    option.textContent = optionText;
+                                    inputElement.appendChild(option);
+                                }
+                            });
+                        }
+                        break;
+                        
+                    case 'textarea':
+                        inputElement = document.createElement('textarea');
+                        inputElement.id = field.id;
+                        inputElement.placeholder = field.placeholder;
+                        inputElement.rows = 3;
+                        break;
+                        
+                    case 'checkbox':
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'checkbox';
+                        inputElement.id = field.id;
+                        // Для checkbox меняем структуру - label справа от checkbox
+                        formGroup.innerHTML = '';
+                        formGroup.style.display = 'flex';
+                        formGroup.style.alignItems = 'center';
+                        formGroup.appendChild(inputElement);
+                        const checkboxLabel = document.createElement('label');
+                        checkboxLabel.setAttribute('for', field.id);
+                        checkboxLabel.textContent = ' ' + field.label + (field.required ? ' *' : '');
+                        checkboxLabel.style.marginLeft = '8px';
+                        formGroup.appendChild(checkboxLabel);
+                        container.appendChild(formGroup);
+                        return; // Выходим, т.к. структура уже готова
+                        
+                    case 'tel':
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'tel';
+                        inputElement.id = field.id;
+                        inputElement.placeholder = field.placeholder;
+                        
+                        // Для системного поля phone добавляем специальные обработчики
+                        if (field.id === 'phone') {
+                            inputElement.value = '+38';
+                            inputElement.maxLength = 13;
+                            inputElement.addEventListener('input', function(e) {
+                                formatPhone(e.target);
+                            });
+                            inputElement.addEventListener('keydown', handlePhoneKeydown);
+                            inputElement.addEventListener('click', handlePhoneClick);
+                            inputElement.addEventListener('focus', function(e) {
+                                setTimeout(() => {
+                                    e.target.setSelectionRange(3, 3);
+                                }, 0);
+                            });
+                        }
+                        break;
+                        
+                    default: // text, email, date, time и др.
+                        inputElement = document.createElement('input');
+                        inputElement.type = field.type;
+                        inputElement.id = field.id;
+                        inputElement.placeholder = field.placeholder;
+                        break;
+                }
+                
+                formGroup.appendChild(inputElement);
+                container.appendChild(formGroup);
+            });
         }
 
         async function fetchProducts() {
@@ -2478,125 +2602,203 @@
         }
 
         function placeOrder() {
-            const phone = document.getElementById('phone').value.trim();
-            const buyer = document.getElementById('buyer').value.trim();
-            const delivery = document.getElementById('delivery').value.trim();
+                    if (cart.length === 0) {
+                        alert("Кошик порожній!");
+                        return;
+                    }
 
-            if (cart.length === 0) {
-                alert("Кошик порожній!");
-                return;
-            }
+                    // Собираем данные со всех полей
+                    const formData = {};
+                    let hasErrors = false;
+                    let errorMessages = [];
 
-            if (!phone || !buyer || !delivery) {
-                alert("Будь ласка, заповніть усі поля для оформлення замовлення.");
-                return;
-            }
+                    orderFields.forEach(field => {
+                        const element = document.getElementById(field.id);
+                        if (!element) return;
 
-            if (!validatePhone(phone)) {
-                alert("Неправильний формат телефону! Введіть номер у форматі +380XXXXXXXXX (10 цифр після +38)");
-                return;
-            }
+                        let value = '';
+                        if (field.type === 'checkbox') {
+                            value = element.checked ? 'Так' : 'Ні';
+                            formData[field.id] = {
+                                label: field.label,
+                                value: value,
+                                required: field.required
+                            };
+                        } else {
+                            value = element.value.trim();
+                            formData[field.id] = {
+                                label: field.label,
+                                value: value,
+                                required: field.required
+                            };
+                        }
 
-            const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
-            const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
-            
-            // Получаем название доставки
-            const deliveryName = delivery.includes(':') ? delivery.split(':')[0] : delivery;
-            
-            // Используем уже рассчитанную стоимость доставки из переменной deliveryCost
-            const actualDeliveryCost = deliveryCost;
-            
-            // Формируем строку доставки для передачи в таблицу
-            let deliveryInfo = '';
-            if (actualDeliveryCost > 0) {
-                deliveryInfo = `${deliveryName}: ${actualDeliveryCost} грн`;
-            } else if (delivery.includes(':')) {
-                // Если доставка была бесплатной по условию (была стоимость, но применилось правило)
-                deliveryInfo = `${deliveryName}: 0 грн (Безкоштовно)`;
-            } else {
-                // Если доставка без стоимости изначально (например "Самовивіз")
-                deliveryInfo = deliveryName;
-            }
-            
-            // Формируем сообщение для Telegram
-            let message = `Нове замовлення:\n${orderDetails}\n\n`;
-            
-            if (actualDeliveryCost > 0) {
-                message += `${deliveryName}: ${actualDeliveryCost} грн\n`;
-            } else if (delivery.includes(':')) {
-                // Если доставка была бесплатной по условию
-                message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
-            }
-            // Если доставка без стоимости, не добавляем строку с ценой
-            
-            const totalWithDelivery = totalPrice + actualDeliveryCost;
-            message += `Сума: ${totalWithDelivery.toFixed(2)} грн\n\nКонтактна інформація:\nТелефон: ${phone}\nІм'я : ${buyer}\nСпосіб доставки: ${deliveryName}`;
+                        // Проверяем обязательные поля
+                        if (field.required && (!value || value === '')) {
+                            hasErrors = true;
+                            errorMessages.push(field.label);
+                        }
 
-            // Показываем индикатор загрузки
-            const orderButton = document.querySelector('#cart button[onclick="placeOrder()"]');
-            const originalButtonText = orderButton.textContent;
-            orderButton.textContent = 'Оформлення...';
-            orderButton.disabled = true;
+                        // Дополнительная валидация для телефона
+                        if (field.id === 'phone' && value && !validatePhone(value)) {
+                            hasErrors = true;
+                            errorMessages.push(`${field.label} (неправильний формат)`);
+                        }
+                    });
 
-            // Отправка в Telegram
-            const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-            const telegramPromise = fetch(telegramUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                }),
-            }).then(response => response.json());
+                    if (hasErrors) {
+                        alert("Будь ласка, заповніть усі обов'язкові поля:\n" + errorMessages.join('\n'));
+                        return;
+                    }
 
-            // Проверяем, нужно ли отправлять в Google Таблицу
-            const promises = [telegramPromise];
-            const shouldSendToGoogleSheet = ORDERS_WEB_APP_URL && ORDERS_WEB_APP_URL.trim() !== '';
-            
-            if (shouldSendToGoogleSheet) {
-                // Отправка в Google Таблицу через скрытую форму (обход CORS)
-                // Передаем deliveryInfo вместо deliveryName
-                const ordersPromise = sendToGoogleSheet(phone, buyer, deliveryInfo, orderDetails, totalWithDelivery);
-                promises.push(ordersPromise);
-            }
+                    const orderDetails = cart.map(item => `${item.name} (${item.price} грн × ${item.quantity})`).join('\n');
+                    const totalPrice = cart.reduce((total, item) => total + item.price * item.quantity, 0);
 
-            // Ждем выполнения всех запросов
-            Promise.all(promises)
-                .then((results) => {
-                    const telegramData = results[0];
-                    const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
-                    
-                    if (telegramData.ok && ordersData.success) {
-                        alert('Замовлення оформлено');
-                        cart = [];
-                        deliveryCost = 0;
-                        renderCart();
-                        saveCart();
-                        document.getElementById('phone').value = '';
-                        document.getElementById('buyer').value = '';
-                        document.getElementById('delivery').value = '';
-                        toggleCart();
-                    } else {
-                        console.error('Помилка:', { telegram: telegramData, orders: ordersData });
-                        if (!telegramData.ok) {
-                            alert('Помилка при відправці замовлення в Telegram.');
-                        } else if (!ordersData.success) {
-                            alert('Помилка при збереженні замовлення в таблицю.');
+                    // Получаем данные доставки для расчета стоимости
+                    const deliveryData = formData['delivery'];
+                    let deliveryName = '';
+                    let actualDeliveryCost = 0;
+
+                    if (deliveryData && deliveryData.value) {
+                        if (deliveryData.value.includes(':')) {
+                            const [name, cost] = deliveryData.value.split(':');
+                            deliveryName = name;
+                            const baseCost = parseFloat(cost) || 0;
+
+                            // Проверяем правила бесплатной доставки
+                            if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
+                                actualDeliveryCost = 0;
+                            } else {
+                                actualDeliveryCost = baseCost;
+                            }
+                        } else {
+                            deliveryName = deliveryData.value;
+                            actualDeliveryCost = 0;
                         }
                     }
-                })
-                .catch(error => {
-                    console.error('Помилка:', error);
-                    alert('Помилка при оформленні замовлення.');
-                })
-                .finally(() => {
-                    // Восстанавливаем кнопку
-                    orderButton.textContent = originalButtonText;
-                    orderButton.disabled = false;
-                });
-        }
+
+                    // Формируем строку доставки для передачи в таблицу
+                    let deliveryInfo = '';
+                    if (actualDeliveryCost > 0) {
+                        deliveryInfo = `${deliveryName}: ${actualDeliveryCost} грн`;
+                    } else if (deliveryData && deliveryData.value.includes(':')) {
+                        deliveryInfo = `${deliveryName}: 0 грн (Безкоштовно)`;
+                    } else {
+                        deliveryInfo = deliveryName;
+                    }
+
+                    // Формируем сообщение для Telegram
+                    let message = `Нове замовлення:\n${orderDetails}\n\n`;
+
+                    if (actualDeliveryCost > 0) {
+                        message += `${deliveryName}: ${actualDeliveryCost} грн\n`;
+                    } else if (deliveryData && deliveryData.value.includes(':')) {
+                        message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
+                    }
+
+                    const totalWithDelivery = totalPrice + actualDeliveryCost;
+                    message += `Сума: ${totalWithDelivery.toFixed(2)} грн\n\nКонтактна інформація:\n`;
+
+                    // Добавляем все поля в сообщение
+                    orderFields.forEach(field => {
+                        const data = formData[field.id];
+                        if (data && data.value) {
+                            // Для доставки пропускаем, т.к. уже добавили выше
+                            if (field.id === 'delivery') return;
+                            message += `${data.label}: ${data.value}\n`;
+                        }
+                    });
+
+                    // Показываем индикатор загрузки
+                    const orderButton = document.getElementById('place-order');
+                    const originalButtonText = orderButton.textContent;
+                    orderButton.textContent = 'Оформлення...';
+                    orderButton.disabled = true;
+
+                    // Отправка в Telegram
+                    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                    const telegramPromise = fetch(telegramUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            chat_id: TELEGRAM_CHAT_ID,
+                            text: message,
+                        }),
+                    }).then(response => response.json());
+
+                    // Проверяем, нужно ли отправлять в Google Таблицу
+                    const promises = [telegramPromise];
+                    const shouldSendToGoogleSheet = ORDERS_WEB_APP_URL && ORDERS_WEB_APP_URL.trim() !== '';
+
+                    if (shouldSendToGoogleSheet) {
+                        // Формируем данные для Google Sheet
+                        const phoneData = formData['phone'];
+                        const phone = phoneData ? phoneData.value : '';
+
+                        // Собираем все остальные поля (кроме phone и delivery) в одну строку
+                        let otherFieldsData = '';
+                        orderFields.forEach(field => {
+                            if (field.id !== 'phone' && field.id !== 'delivery') {
+                                const data = formData[field.id];
+                                if (data && data.value) {
+                                    otherFieldsData += `${data.label}: ${data.value}\n`;
+                                }
+                            }
+                        });
+
+                        const ordersPromise = sendToGoogleSheet(phone, otherFieldsData, deliveryInfo, orderDetails, totalWithDelivery);
+                        promises.push(ordersPromise);
+                    }
+
+                    // Ждем выполнения всех запросов
+                    Promise.all(promises)
+                        .then((results) => {
+                            const telegramData = results[0];
+                            const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
+
+                            if (telegramData.ok && ordersData.success) {
+                                alert('Замовлення оформлено');
+                                cart = [];
+                                deliveryCost = 0;
+                                renderCart();
+                                saveCart();
+                                
+                                // Очищаем все поля формы
+                                orderFields.forEach(field => {
+                                    const element = document.getElementById(field.id);
+                                    if (element) {
+                                        if (field.type === 'checkbox') {
+                                            element.checked = false;
+                                        } else if (field.id === 'phone') {
+                                            element.value = '+38';
+                                        } else {
+                                            element.value = '';
+                                        }
+                                    }
+                                });
+                                
+                                toggleCart();
+                            } else {
+                                console.error('Помилка:', { telegram: telegramData, orders: ordersData });
+                                if (!telegramData.ok) {
+                                    alert('Помилка при відправці замовлення в Telegram.');
+                                } else if (!ordersData.success) {
+                                    alert('Помилка при збереженні замовлення в таблицю.');
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Помилка:', error);
+                            alert('Помилка при оформленні замовлення.');
+                        })
+                        .finally(() => {
+                            // Восстанавливаем кнопку
+                            orderButton.textContent = originalButtonText;
+                            orderButton.disabled = false;
+                        });
+                }
 
         function sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice) {
             console.log('Отправка в Google Sheet:', {
