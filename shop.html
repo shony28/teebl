@@ -1453,7 +1453,7 @@
                         
                         // 2. Сумма общая
                         const totalWithDelivery = totalPrice + deliveryCost;
-                        summaryHtml += `<span style="color: #000; font-size: 20px;">Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
+                        summaryHtml += `<span style="color: #000; font-size: 20px; margin-top: 10px; display: inline-block;">Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
                         
                         totalPriceElement.innerHTML = summaryHtml;
                         totalQuantityElement.innerText = totalQuantity;
@@ -2680,7 +2680,7 @@
                     
                     // 2. Сумма общая
                     const totalWithDelivery = totalPrice + deliveryCost;
-                    summaryHtml += `Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
+                    summaryHtml += `<span style="color: #000; font-size: 20px; margin-top: 10px; display: inline-block;">Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
                     
                     totalPriceElement.innerHTML = summaryHtml;
                     
