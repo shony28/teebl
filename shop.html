@@ -1366,60 +1366,117 @@
 
 
             function updateDeliveryCost() {
-                const deliveryElement = document.getElementById('delivery');
-                if (!deliveryElement) return;
-                
-                const selectedValue = deliveryElement.value;
-                
-                // Проверяем, есть ли стоимость доставки
-                if (selectedValue.includes(':')) {
-                    const [deliveryName, cost] = selectedValue.split(':');
-                    const baseCost = parseFloat(cost) || 0;
+                    const deliveryElement = document.getElementById('delivery');
+                    if (!deliveryElement) return;
                     
-                    // Проверяем, есть ли правило бесплатной доставки для этой доставки
-                    if (freeDeliveryRules[deliveryName]) {
-                        const freeFromAmount = freeDeliveryRules[deliveryName];
-                        const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                    const selectedValue = deliveryElement.value;
+                    
+                    // Проверяем, есть ли стоимость доставки
+                    if (selectedValue.includes(':')) {
+                        const [deliveryName, cost] = selectedValue.split(':');
+                        const baseCost = parseFloat(cost) || 0;
                         
-                        // Если сумма корзины >= минимальной суммы для бесплатной доставки
-                        if (cartTotal >= freeFromAmount) {
-                            deliveryCost = 0;
+                        // Проверяем, есть ли правило бесплатной доставки для этой доставки
+                        if (freeDeliveryRules[deliveryName]) {
+                            const freeFromAmount = freeDeliveryRules[deliveryName];
+                            const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
+                            
+                            // Если сумма корзины >= минимальной суммы для бесплатной доставки
+                            if (cartTotal >= freeFromAmount) {
+                                deliveryCost = 0;
+                            } else {
+                                deliveryCost = baseCost;
+                            }
                         } else {
                             deliveryCost = baseCost;
                         }
                     } else {
-                        deliveryCost = baseCost;
+                        deliveryCost = 0;
                     }
-                } else {
-                    deliveryCost = 0;
+                    
+                    // Обновляем только отображение суммы, БЕЗ полного перерендера корзины
+                    updateCartSummary();
                 }
-                
-                // Обновляем отображение корзины
-                renderCart();
-            }
+
+
+              function updateCartSummary() {
+                        const totalPriceElement = document.getElementById('total-price');
+                        const totalQuantityElement = document.getElementById('total-quantity');
+                        
+                        if (!totalPriceElement || !totalQuantityElement) return;
+                        
+                        let totalQuantity = 0;
+                        let totalPrice = 0;
+                        
+                        cart.forEach(item => {
+                            totalQuantity += item.quantity;
+                            totalPrice += item.price * item.quantity;
+                        });
+                        
+                        const deliverySelect = document.getElementById('delivery');
+                        
+                        // Формируем информацию о доставке и итоговой сумме
+                        let summaryHtml = '';
+                        
+                        // 1. Выбранная доставка и стоимость доставки
+                        if (deliverySelect && deliverySelect.value) {
+                            const deliveryName = deliverySelect.value.includes(':') 
+                                ? deliverySelect.value.split(':')[0] 
+                                : deliverySelect.value;
+                            
+                            // Проверяем, есть ли стоимость доставки
+                            if (deliverySelect.value.includes(':')) {
+                                // Проверяем, действует ли бесплатная доставка
+                                if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
+                                    summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
+                                } else if (deliveryCost > 0) {
+                                    summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
+                                    
+                                    // Показываем, сколько осталось до бесплатной доставки
+                                    if (freeDeliveryRules[deliveryName]) {
+                                        const remaining = freeDeliveryRules[deliveryName] - totalPrice;
+                                        if (remaining > 0) {
+                                            summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 2. Сумма общая
+                        const totalWithDelivery = totalPrice + deliveryCost;
+                        summaryHtml += `Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
+                        
+                        totalPriceElement.innerHTML = summaryHtml;
+                        totalQuantityElement.innerText = totalQuantity;
+                        
+                        // Обновляем счетчик в иконке корзины
+                        document.getElementById('cart-count').innerText = totalQuantity;
+                        updateFloatingCartCount();
+                    }  
 
 
         function getColumnMapping(headerRow) {
-    const mapping = {};
-    const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
-    
-    headerRow.forEach((cell, index) => {
-        if (!cell) return;
-        const headerValue = (cell.v || '').toString().toLowerCase().trim();
-        
-        if (requiredHeaders.includes(headerValue)) {
-            mapping[headerValue] = index;
-        }
-    });
-    
-    // Проверяем, что все обязательные заголовки найдены
-    const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
-    if (missingHeaders.length > 0) {
-        console.warn('Відсутні заголовки:', missingHeaders);
-    }
-    
-    return mapping;
-}
+                const mapping = {};
+                const requiredHeaders = ['id', 'name', 'description', 'price', 'image-url', 'tags'];
+                
+                headerRow.forEach((cell, index) => {
+                    if (!cell) return;
+                    const headerValue = (cell.v || '').toString().toLowerCase().trim();
+                    
+                    if (requiredHeaders.includes(headerValue)) {
+                        mapping[headerValue] = index;
+                    }
+                });
+                
+                // Проверяем, что все обязательные заголовки найдены
+                const missingHeaders = requiredHeaders.filter(header => !(header in mapping));
+                if (missingHeaders.length > 0) {
+                    console.warn('Відсутні заголовки:', missingHeaders);
+                }
+                
+                return mapping;
+            }
 
         // Загрузка страниц с листа "pages"
         async function loadPages() {
