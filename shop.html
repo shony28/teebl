@@ -2825,7 +2825,7 @@
                     let message = `Нове замовлення:\n${orderDetails}\n\n`;
 
                     if (actualDeliveryCost > 0) {
-                        message += `${deliveryName}: ${actualDeliveryCost} грн\n`;
+                        message += `${deliveryInfo}: ${actualDeliveryCost} грн\n`;
                     } else if (deliveryData && deliveryData.value.includes(':')) {
                         message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
                     }
@@ -3204,6 +3204,7 @@
     </script>
 </body>
 </html>
+
 
 
 
