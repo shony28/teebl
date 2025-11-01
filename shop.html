@@ -1016,6 +1016,43 @@
             opacity: 0.6;
         }
 
+        .order-success-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #4CAF50;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+.order-success-overlay span {
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -2855,29 +2892,40 @@
                             const telegramData = results[0];
                             const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
 
-                            if (telegramData.ok && ordersData.success) {
+                        if (telegramData.ok && ordersData.success) {
+                            // Показываем зеленый экран с сообщением
+                            const successOverlay = document.createElement('div');
+                            successOverlay.className = 'order-success-overlay';
+                            successOverlay.innerHTML = '<span>Оформлено</span>';
+                            document.body.appendChild(successOverlay);
+                            
+                            // Удаляем оверлей через 2 секунды
+                            setTimeout(() => {
+                                document.body.removeChild(successOverlay);
                                 alert('Замовлення оформлено');
-                                cart = [];
-                                deliveryCost = 0;
-                                renderCart();
-                                saveCart();
-                                
-                                // Очищаем все поля формы
-                                orderFields.forEach(field => {
-                                    const element = document.getElementById(field.id);
-                                    if (element) {
-                                        if (field.type === 'checkbox') {
-                                            element.checked = false;
-                                        } else if (field.id === 'phone') {
-                                            element.value = '+38';
-                                        } else {
-                                            element.value = '';
-                                        }
+                            }, 2000);
+                            
+                            cart = [];
+                            deliveryCost = 0;
+                            renderCart();
+                            saveCart();
+                            
+                            // Очищаем все поля формы
+                            orderFields.forEach(field => {
+                                const element = document.getElementById(field.id);
+                                if (element) {
+                                    if (field.type === 'checkbox') {
+                                        element.checked = false;
+                                    } else if (field.id === 'phone') {
+                                        element.value = '+38';
+                                    } else {
+                                        element.value = '';
                                     }
-                                });
-                                
-                                toggleCart();
-                            } else {
+                                }
+                            });
+                            
+                            toggleCart();
+                        } else {
                                 console.error('Помилка:', { telegram: telegramData, orders: ordersData });
                                 if (!telegramData.ok) {
                                     alert('Помилка при відправці замовлення в Telegram.');
