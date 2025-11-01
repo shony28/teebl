@@ -1699,11 +1699,8 @@
                 console.log('Застосовано правила безкоштовної доставки:', freeDeliveryRules);
             }
             
-
-               // Парсим и рендерим поля заказа
-                parseOrderFields();
-                renderOrderFields(); 
-            }
+            // Парсим поля заказа (но не рендерим их здесь)
+            parseOrderFields();
             
             // Применение логотипа (изображение или текст)
             const logoContainer = document.querySelector('.header-top__logo');
@@ -1721,6 +1718,7 @@
                     logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
                 }
             }
+        }
         
 
         function parseOrderFields() {
@@ -2500,101 +2498,104 @@
         }
 
         function renderCart() {
-            const cartContainer = document.getElementById('cart-items');
-            const totalPriceElement = document.getElementById('total-price');
-            const totalQuantityElement = document.getElementById('total-quantity');
-
-            cartContainer.innerHTML = '';
-
-            let totalQuantity = 0;
-            let totalPrice = 0;
-
-            if (cart.length === 0) {
-                // Показываем сообщение о пустой корзине
-                const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'empty-cart-message';
-                emptyMessage.textContent = 'Кошик порожній';
-                cartContainer.appendChild(emptyMessage);
-            } else {
-                cart.forEach((item, index) => {
-                    const cartItemElement = document.createElement('div');
-                    cartItemElement.className = 'cart-item';
-                    cartItemElement.innerHTML = `
-                        <span class="material-icons-outlined remove-item" onclick="removeFromCart('${item.id}')">close</span>
-                        <div class="details">
-                            <div class="info">
-                                <p>${item.name}</p>
-                            </div>
-                            <div class="quantity-controls">
-                                <button onclick="decreaseQuantity('${item.id}')">-</button>
-                                <span>${item.quantity}</span>
-                                <button onclick="increaseQuantity('${item.id}')">+</button>
-                            </div>
-                            <p class="item-price">${item.price * item.quantity} грн</p>
-                        </div>
-                    `;
-                    cartContainer.appendChild(cartItemElement);
-
-                    // Добавляем разделитель, если это не последний элемент
-                    if (index < cart.length - 1) {
-                        const separator = document.createElement('div');
-                        separator.className = 'cart-separator';
-                        separator.style.cssText = 'height: 1px; background-color: #e0e0e0; margin: 10px 0;';
-                        cartContainer.appendChild(separator);
-                    }
-
-                    totalQuantity += item.quantity;
-                    totalPrice += item.price * item.quantity;
-                });
-            }
-
-            // Формируем информацию о доставке и итоговой сумме
-            const deliverySelect = document.getElementById('delivery');
-            
-            // Обновляем только totalPriceElement (он содержит всю информацию)
-            let summaryHtml = '';
-            
-            // 1. Выбранная доставка и стоимость доставки
-            if (deliverySelect.value) {
-                const deliveryName = deliverySelect.value.includes(':') 
-                    ? deliverySelect.value.split(':')[0] 
-                    : deliverySelect.value;
+                // Рендерим поля формы заказа сразу при рендере корзины
+                renderOrderFields();
                 
-                // Проверяем, есть ли стоимость доставки
-                if (deliverySelect.value.includes(':')) {
-                    // Проверяем, действует ли бесплатная доставка
-                    if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
-                        summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
-                    } else if (deliveryCost > 0) {
-                        summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
-                        
-                        // Показываем, сколько осталось до бесплатной доставки
-                        if (freeDeliveryRules[deliveryName]) {
-                            const remaining = freeDeliveryRules[deliveryName] - totalPrice;
-                            if (remaining > 0) {
-                                summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                const cartContainer = document.getElementById('cart-items');
+                const totalPriceElement = document.getElementById('total-price');
+                const totalQuantityElement = document.getElementById('total-quantity');
+
+                cartContainer.innerHTML = '';
+
+                let totalQuantity = 0;
+                let totalPrice = 0;
+
+                if (cart.length === 0) {
+                    // Показываем сообщение о пустой корзине
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.className = 'empty-cart-message';
+                    emptyMessage.textContent = 'Кошик порожній';
+                    cartContainer.appendChild(emptyMessage);
+                } else {
+                    cart.forEach((item, index) => {
+                        const cartItemElement = document.createElement('div');
+                        cartItemElement.className = 'cart-item';
+                        cartItemElement.innerHTML = `
+                            <span class="material-icons-outlined remove-item" onclick="removeFromCart('${item.id}')">close</span>
+                            <div class="details">
+                                <div class="info">
+                                    <p>${item.name}</p>
+                                </div>
+                                <div class="quantity-controls">
+                                    <button onclick="decreaseQuantity('${item.id}')">-</button>
+                                    <span>${item.quantity}</span>
+                                    <button onclick="increaseQuantity('${item.id}')">+</button>
+                                </div>
+                                <p class="item-price">${item.price * item.quantity} грн</p>
+                            </div>
+                        `;
+                        cartContainer.appendChild(cartItemElement);
+
+                        // Добавляем разделитель, если это не последний элемент
+                        if (index < cart.length - 1) {
+                            const separator = document.createElement('div');
+                            separator.className = 'cart-separator';
+                            separator.style.cssText = 'height: 1px; background-color: #e0e0e0; margin: 10px 0;';
+                            cartContainer.appendChild(separator);
+                        }
+
+                        totalQuantity += item.quantity;
+                        totalPrice += item.price * item.quantity;
+                    });
+                }
+
+                // Формируем информацию о доставке и итоговой сумме
+                const deliverySelect = document.getElementById('delivery');
+                
+                // Обновляем только totalPriceElement (он содержит всю информацию)
+                let summaryHtml = '';
+                
+                // 1. Выбранная доставка и стоимость доставки
+                if (deliverySelect && deliverySelect.value) {
+                    const deliveryName = deliverySelect.value.includes(':') 
+                        ? deliverySelect.value.split(':')[0] 
+                        : deliverySelect.value;
+                    
+                    // Проверяем, есть ли стоимость доставки
+                    if (deliverySelect.value.includes(':')) {
+                        // Проверяем, действует ли бесплатная доставка
+                        if (freeDeliveryRules[deliveryName] && totalPrice >= freeDeliveryRules[deliveryName]) {
+                            summaryHtml += `${deliveryName}: <span style="text-decoration: line-through;">${deliverySelect.value.split(':')[1]} грн</span> <span style="color: green; font-weight: bold;">0 грн (Безкоштовно)</span><br>`;
+                        } else if (deliveryCost > 0) {
+                            summaryHtml += `${deliveryName}: ${deliveryCost.toFixed(2)} грн<br>`;
+                            
+                            // Показываем, сколько осталось до бесплатной доставки
+                            if (freeDeliveryRules[deliveryName]) {
+                                const remaining = freeDeliveryRules[deliveryName] - totalPrice;
+                                if (remaining > 0) {
+                                    summaryHtml += `<span style="color: #666; font-size: 12px;">Ще ${remaining.toFixed(2)} грн до безкоштовної доставки</span><br>`;
+                                }
                             }
                         }
                     }
+                    // Если доставка без стоимости (например "Самовивіз"), ничего не добавляем в summaryHtml
                 }
-                // Если доставка без стоимости (например "Самовивіз"), ничего не добавляем в summaryHtml
+                
+                // 2. Сумма общая
+                const totalWithDelivery = totalPrice + deliveryCost;
+                summaryHtml += `Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
+                
+                totalPriceElement.innerHTML = summaryHtml;
+                
+                // 3. Загальна кількість товарів (обновляем отдельный элемент)
+                totalQuantityElement.innerText = totalQuantity;
+                
+                // Обновляем счетчик в иконке корзины
+                document.getElementById('cart-count').innerText = totalQuantity;
+                
+                // Обновляем плавающую корзину
+                updateFloatingCartCount();
             }
-            
-            // 2. Сумма общая
-            const totalWithDelivery = totalPrice + deliveryCost;
-            summaryHtml += `Загальна сума: ${totalWithDelivery.toFixed(2)} грн`;
-            
-            totalPriceElement.innerHTML = summaryHtml;
-            
-            // 3. Загальна кількість товарів (обновляем отдельный элемент)
-            totalQuantityElement.innerText = totalQuantity;
-            
-            // Обновляем счетчик в иконке корзины
-            document.getElementById('cart-count').innerText = totalQuantity;
-            
-            // Обновляем плавающую корзину
-            updateFloatingCartCount();
-        }
 
         function toggleCart() {
             isCartVisible = !isCartVisible;
