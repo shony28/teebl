@@ -1017,41 +1017,41 @@
         }
 
         .order-success-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #4CAF50;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 10000;
-    opacity: 0;
-    animation: fadeInOut 2s ease-in-out;
-}
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #4CAF50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            animation: fadeInOut 2s ease-in-out;
+        }
 
-.order-success-overlay span {
-    color: white;
-    font-size: 48px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
+        .order-success-overlay span {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
 
-@keyframes fadeInOut {
-    0% {
-        opacity: 0;
-    }
-    20% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
 
     </style>
 </head>
@@ -2806,28 +2806,29 @@
                                 actualDeliveryCost = baseCost;
                             }
                         } else {
+                            // Если доставка без стоимости (например "Самовивіз")
                             deliveryName = deliveryData.value;
                             actualDeliveryCost = 0;
                         }
                     }
 
-                    // Формируем строку доставки для передачи в таблицу
+                    // Формируем строку доставки для передачи в таблицу и Telegram
                     let deliveryInfo = '';
                     if (actualDeliveryCost > 0) {
                         deliveryInfo = `${deliveryName}: ${actualDeliveryCost} грн`;
                     } else if (deliveryData && deliveryData.value.includes(':')) {
                         deliveryInfo = `${deliveryName}: 0 грн (Безкоштовно)`;
-                    } else {
+                    } else if (deliveryName) {
+                        // Для доставки без стоимости просто название
                         deliveryInfo = deliveryName;
                     }
 
                     // Формируем сообщение для Telegram
                     let message = `Нове замовлення:\n${orderDetails}\n\n`;
 
-                    if (actualDeliveryCost > 0) {
-                        message += `${deliveryInfo}: ${actualDeliveryCost} грн\n`;
-                    } else if (deliveryData && deliveryData.value.includes(':')) {
-                        message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
+                    // Добавляем информацию о доставке в Telegram (используем deliveryInfo)
+                    if (deliveryInfo) {
+                        message += `${deliveryInfo}\n`;
                     }
 
                     const totalWithDelivery = totalPrice + actualDeliveryCost;
@@ -2892,40 +2893,40 @@
                             const telegramData = results[0];
                             const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
 
-                        if (telegramData.ok && ordersData.success) {
-                            // Показываем зеленый экран с сообщением
-                            const successOverlay = document.createElement('div');
-                            successOverlay.className = 'order-success-overlay';
-                            successOverlay.innerHTML = '<span>Оформлено</span>';
-                            document.body.appendChild(successOverlay);
-                            
-                            // Удаляем оверлей через 2 секунды
-                            setTimeout(() => {
-                                document.body.removeChild(successOverlay);
-                                alert('Замовлення оформлено');
-                            }, 2000);
-                            
-                            cart = [];
-                            deliveryCost = 0;
-                            renderCart();
-                            saveCart();
-                            
-                            // Очищаем все поля формы
-                            orderFields.forEach(field => {
-                                const element = document.getElementById(field.id);
-                                if (element) {
-                                    if (field.type === 'checkbox') {
-                                        element.checked = false;
-                                    } else if (field.id === 'phone') {
-                                        element.value = '+38';
-                                    } else {
-                                        element.value = '';
+                            if (telegramData.ok && ordersData.success) {
+                                // Показываем зеленый экран с сообщением
+                                const successOverlay = document.createElement('div');
+                                successOverlay.className = 'order-success-overlay';
+                                successOverlay.innerHTML = '<span>Оформлено</span>';
+                                document.body.appendChild(successOverlay);
+                                
+                                // Удаляем оверлей через 2 секунды
+                                setTimeout(() => {
+                                    document.body.removeChild(successOverlay);
+                                    alert('Замовлення оформлено');
+                                }, 2000);
+                                
+                                cart = [];
+                                deliveryCost = 0;
+                                renderCart();
+                                saveCart();
+                                
+                                // Очищаем все поля формы
+                                orderFields.forEach(field => {
+                                    const element = document.getElementById(field.id);
+                                    if (element) {
+                                        if (field.type === 'checkbox') {
+                                            element.checked = false;
+                                        } else if (field.id === 'phone') {
+                                            element.value = '+38';
+                                        } else {
+                                            element.value = '';
+                                        }
                                     }
-                                }
-                            });
-                            
-                            toggleCart();
-                        } else {
+                                });
+                                
+                                toggleCart();
+                            } else {
                                 console.error('Помилка:', { telegram: telegramData, orders: ordersData });
                                 if (!telegramData.ok) {
                                     alert('Помилка при відправці замовлення в Telegram.');
@@ -3204,7 +3205,6 @@
     </script>
 </body>
 </html>
-
 
 
 
