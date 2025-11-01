@@ -1786,7 +1786,7 @@
             orderFields = [];
             
             // Системное поле: телефон (если не отключено)
-            if (settingsData.disablePhoneField !== 'yes') {
+            if (settingsData.disablePhoneField !== 'off') {
                 orderFields.push({
                     id: 'phone',
                     type: 'tel',
@@ -1819,7 +1819,7 @@
             }
             
             // Системное поле: доставка (если не отключено)
-            if (settingsData.disableDeliveryField !== 'yes') {
+            if (settingsData.disableDeliveryField !== 'off') {
                 orderFields.push({
                     id: 'delivery',
                     type: 'select',
