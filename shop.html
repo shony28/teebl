@@ -1154,7 +1154,7 @@
     <script>
         const SPREADSHEET_ID = null; // null для использования параметра ?id= или конкретный ID '1a8iWHQI57_3Z3eGJWmysiCSM_PVrD98roIUofae0GoI'
         const RANGE = 'goods!A2:E';
-        
+        const TELEGRAM_BOT_TOKEN = '6863026193:AAEt0ol4WSPSECRChSEDv_Dk6wzJqCyWa94'; // '8281547818:AAFFgS0IJa75D4Lp9LJz2p0fQQy7gxK0wRs' - lagro_farm_bot
         let TELEGRAM_CHAT_ID = '';
         const CATEGORIES_RANGE = 'category!A2:D';
         const SETTINGS_SHEET_NAME = 'settings';
@@ -2824,13 +2824,14 @@
                         // Формируем сообщение для Telegram
                         let message = `Нове замовлення:\n${orderDetails}\n\n`;
 
-                        // Всегда добавляем информацию о доставке, если она выбрана
+                        // ИСПРАВЛЕНИЕ: Всегда добавляем информацию о доставке, если она выбрана
                         if (deliveryName) {
                             if (actualDeliveryCost > 0) {
                                 message += `${deliveryName}: ${actualDeliveryCost} грн\n`;
                             } else if (deliveryData.value.includes(':')) {
                                 message += `${deliveryName}: 0 грн (Безкоштовно)\n`;
                             } else {
+                                // Для доставок без стоимости (например "Самовивіз")
                                 message += `${deliveryName}\n`;
                             }
                         }
@@ -2842,6 +2843,7 @@
                         orderFields.forEach(field => {
                             const data = formData[field.id];
                             if (data && data.value) {
+                                // Для доставки пропускаем, т.к. уже добавили выше
                                 if (field.id === 'delivery') return;
                                 message += `${data.label}: ${data.value}\n`;
                             }
@@ -2853,15 +2855,16 @@
                         orderButton.textContent = 'Оформлення...';
                         orderButton.disabled = true;
 
-                        // Отправка в Telegram через Web App
-                        const telegramPromise = fetch(ORDERS_WEB_APP_URL, {
+                        // Отправка в Telegram
+                        const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+                        const telegramPromise = fetch(telegramUrl, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                                chatId: TELEGRAM_CHAT_ID,
-                                message: message,
+                                chat_id: TELEGRAM_CHAT_ID,
+                                text: message,
                             }),
                         }).then(response => response.json());
 
@@ -2870,9 +2873,11 @@
                         const shouldSendToGoogleSheet = ORDERS_WEB_APP_URL && ORDERS_WEB_APP_URL.trim() !== '';
 
                         if (shouldSendToGoogleSheet) {
+                            // Формируем данные для Google Sheet
                             const phoneData = formData['phone'];
                             const phone = phoneData ? phoneData.value : '';
 
+                            // Собираем все остальные поля (кроме phone и delivery) в одну строку
                             let otherFieldsData = '';
                             orderFields.forEach(field => {
                                 if (field.id !== 'phone' && field.id !== 'delivery') {
@@ -2893,41 +2898,42 @@
                                 const telegramData = results[0];
                                 const ordersData = shouldSendToGoogleSheet ? results[1] : { success: true };
 
-                                if (telegramData.success && ordersData.success) {
-                                    // Показываем зеленый экран с сообщением
-                                    const successOverlay = document.createElement('div');
-                                    successOverlay.className = 'order-success-overlay';
-                                    successOverlay.innerHTML = '<span>Оформлено</span>';
-                                    document.body.appendChild(successOverlay);
-                                    
-                                    setTimeout(() => {
-                                        document.body.removeChild(successOverlay);
-                                        alert('Замовлення оформлено');
-                                    }, 3000);
-                                    
-                                    cart = [];
-                                    deliveryCost = 0;
-                                    renderCart();
-                                    saveCart();
-                                    
-                                    // Очищаем все поля формы
-                                    orderFields.forEach(field => {
-                                        const element = document.getElementById(field.id);
-                                        if (element) {
-                                            if (field.type === 'checkbox') {
-                                                element.checked = false;
-                                            } else if (field.id === 'phone') {
-                                                element.value = '+38';
-                                            } else {
-                                                element.value = '';
-                                            }
+                            if (telegramData.ok && ordersData.success) {
+                                // Показываем зеленый экран с сообщением
+                                const successOverlay = document.createElement('div');
+                                successOverlay.className = 'order-success-overlay';
+                                successOverlay.innerHTML = '<span>Оформлено</span>';
+                                document.body.appendChild(successOverlay);
+                                
+                                // Удаляем оверлей через 3 секунды
+                                setTimeout(() => {
+                                    document.body.removeChild(successOverlay);
+                                    alert('Замовлення оформлено');
+                                }, 3000);
+                                
+                                cart = [];
+                                deliveryCost = 0;
+                                renderCart();
+                                saveCart();
+                                
+                                // Очищаем все поля формы
+                                orderFields.forEach(field => {
+                                    const element = document.getElementById(field.id);
+                                    if (element) {
+                                        if (field.type === 'checkbox') {
+                                            element.checked = false;
+                                        } else if (field.id === 'phone') {
+                                            element.value = '+38';
+                                        } else {
+                                            element.value = '';
                                         }
-                                    });
-                                    
-                                    toggleCart();
-                                } else {
+                                    }
+                                });
+                                
+                                toggleCart();
+                            } else {
                                     console.error('Помилка:', { telegram: telegramData, orders: ordersData });
-                                    if (!telegramData.success) {
+                                    if (!telegramData.ok) {
                                         alert('Помилка при відправці замовлення в Telegram.');
                                     } else if (!ordersData.success) {
                                         alert('Помилка при збереженні замовлення в таблицю.');
@@ -2939,6 +2945,7 @@
                                 alert('Помилка при оформленні замовлення.');
                             })
                             .finally(() => {
+                                // Восстанавливаем кнопку
                                 orderButton.textContent = originalButtonText;
                                 orderButton.disabled = false;
                             });
