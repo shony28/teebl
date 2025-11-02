@@ -3028,38 +3028,24 @@
         }
 
             document.addEventListener('DOMContentLoaded', function() {
-                loadCart();
-                fetchProducts(); // Внутри fetchProducts вызывается loadSettings, который применит настройки
-                initScrollTracking();
-                
-                // Добавить обработчики для поля телефона:
-                const phoneInput = document.getElementById('phone');
-                phoneInput.addEventListener('input', function(e) {
-                    formatPhone(e.target);
-                });
-                phoneInput.addEventListener('keydown', handlePhoneKeydown);
-                phoneInput.addEventListener('click', handlePhoneClick);
-                phoneInput.addEventListener('focus', function(e) {
-                    // При фокусе устанавливаем курсор после +38
-                    setTimeout(() => {
-                        e.target.setSelectionRange(3, 3);
-                    }, 0);
-                });
-                
-                window.addEventListener('popstate', function(event) {
-                    checkURLAndShowContent();
-                });
-                
-                document.getElementById('search').addEventListener('input', function(e) {
-                    filterProducts();
-                });
-                
-                document.addEventListener('click', function(e) {
-                    if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                        closeMobileNav();
-                    }
-                });
-            });
+                            loadCart();
+                            fetchProducts(); // Внутри fetchProducts вызывается loadSettings, который применит настройки
+                            initScrollTracking();
+                            
+                            window.addEventListener('popstate', function(event) {
+                                checkURLAndShowContent();
+                            });
+                            
+                            document.getElementById('search').addEventListener('input', function(e) {
+                                filterProducts();
+                            });
+                            
+                            document.addEventListener('click', function(e) {
+                                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                                    closeMobileNav();
+                                }
+                            });
+                        });
 
             function checkURLAndShowContent() {
                 const goodsId = getParameterByName('goodsId');
