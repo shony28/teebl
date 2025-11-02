@@ -1154,7 +1154,7 @@
     <script>
         const SPREADSHEET_ID = null; // null для использования параметра ?id= или конкретный ID '1a8iWHQI57_3Z3eGJWmysiCSM_PVrD98roIUofae0GoI'
         const RANGE = 'goods!A2:E';
-        const TELEGRAM_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzVPlD0yO6FO8thwsvqRPPTre-EnUDQ-cnCxluG3Xg9tU1oTeKNnd4bADZODGanmzUu/exec'; // URL от Apps Script Web App
+        
         let TELEGRAM_CHAT_ID = '';
         const CATEGORIES_RANGE = 'category!A2:D';
         const SETTINGS_SHEET_NAME = 'settings';
@@ -2854,7 +2854,7 @@
                         orderButton.disabled = true;
 
                         // Отправка в Telegram через Web App
-                        const telegramPromise = fetch(TELEGRAM_WEB_APP_URL, {
+                        const telegramPromise = fetch(ORDERS_WEB_APP_URL, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
