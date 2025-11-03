@@ -2983,67 +2983,77 @@
             }
         }
 
-            document.addEventListener('DOMContentLoaded', function() {
-                            loadCart();
-                            fetchProducts(); // Внутри fetchProducts вызывается loadSettings, который применит настройки
-                            initScrollTracking();
-                            
-                            window.addEventListener('popstate', function(event) {
-                                checkURLAndShowContent();
-                            });
-                            
-                            document.getElementById('search').addEventListener('input', function(e) {
-                                filterProducts();
-                            });
-                            
-                            document.addEventListener('click', function(e) {
-                                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                                    closeMobileNav();
-                                }
-                            });
-                        });
+                document.addEventListener('DOMContentLoaded', function() {
+                    loadCart();
+                    fetchProducts();
+                    initScrollTracking();
+                    
+                    window.addEventListener('popstate', async function(event) {
+                        await checkURLAndShowContent();
+                    });
+                    
+                    document.getElementById('search').addEventListener('input', function(e) {
+                        filterProducts();
+                    });
+                    
+                    document.addEventListener('click', function(e) {
+                        if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                            closeMobileNav();
+                        }
+                    });
+                });
 
-            function checkURLAndShowContent() {
-                const goodsId = getParameterByName('goodsId');
-                const categoryId = getParameterByName('categoryId');
-                const pageId = getParameterByName('pageId');
-                
-                // Если данные еще не загрузились, ждем
-                if (allProducts.length === 0 || allCategories.length === 0) {
-                    return;
-                }
-                
-                // Проверяем параметр pageId
-                if (pageId) {
-                    const pageData = allPages.find(p => p[0] === pageId);
-                    if (pageData) {
-                        showPage(pageId, pageData[1] || pageId);
-                        return;
+                async function checkURLAndShowContent() {
+                    const goodsId = getParameterByName('goodsId');
+                    const categoryId = getParameterByName('categoryId');
+                    const pageId = getParameterByName('pageId');
+                    
+                    // Если данные еще не загрузились, ждем их загрузки
+                    if (allProducts.length === 0 || allCategories.length === 0) {
+                        console.log('Данные еще не загружены, ожидание...');
+                        // Ждем, пока данные загрузятся (максимум 10 секунд)
+                        let attempts = 0;
+                        while ((allProducts.length === 0 || allCategories.length === 0) && attempts < 100) {
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            attempts++;
+                        }
+                        if (allProducts.length === 0 || allCategories.length === 0) {
+                            console.error('Данные не загрузились');
+                            return;
+                        }
                     }
-                }
-                
-                // Проверяем параметр goodsId
-                if (goodsId) {
-                    const product = allProducts.find(p => p[0] === goodsId);
-                    if (product) {
-                        const [id, name, description, price, imageUrl, tags] = product;
-                        showProductPage(id, name, description, price, imageUrl);
-                        return;
+                    
+                    // Проверяем параметр pageId
+                    if (pageId) {
+                        const pageData = allPages.find(p => p[0] === pageId);
+                        if (pageData) {
+                            showPage(pageId, pageData[1] || pageId);
+                            return;
+                        }
                     }
-                }
-                
-                // Проверяем параметр categoryId
-                if (categoryId) {
-                    const category = allCategories.find(c => c[0] === categoryId);
-                    if (category) {
-                        showCategory(categoryId);
-                        return;
+                    
+                    // Проверяем параметр goodsId
+                    if (goodsId) {
+                        const product = allProducts.find(p => p[0] === goodsId);
+                        if (product) {
+                            const [id, name, description, price, imageUrl, tags] = product;
+                            showProductPage(id, name, description, price, imageUrl);
+                            return;
+                        }
                     }
+                    
+                    // Проверяем параметр categoryId
+                    if (categoryId) {
+                        const category = allCategories.find(c => c[0] === categoryId);
+                        if (category) {
+                            showCategory(categoryId);
+                            return;
+                        }
+                    }
+                    
+                    // По умолчанию показываем главную страницу с категориями
+                    showMainCategories();
                 }
-                
-                // По умолчанию показываем главную страницу с категориями
-                showMainCategories();
-            }
 
         // Функция для обновления счетчика плавающей корзины
         function updateFloatingCartCount() {
