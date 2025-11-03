@@ -3004,48 +3004,46 @@
                         });
 
             function checkURLAndShowContent() {
-                        const goodsId = getParameterByName('goodsId');
-                        const categoryId = getParameterByName('categoryId');
-                        const pageId = getParameterByName('pageId');
-                        
-                        // Если данные еще не загрузились, ждем
-                        if (allProducts.length === 0 || allCategories.length === 0) {
-                            // Повторяем попытку через 100ms
-                            setTimeout(checkURLAndShowContent, 100);
-                            return;
-                        }
-                        
-                        // Проверяем параметр pageId
-                        if (pageId) {
-                            const pageData = allPages.find(p => p[0] === pageId);
-                            if (pageData) {
-                                showPage(pageId, pageData[1] || pageId);
-                                return;
-                            }
-                        }
-                        
-                        // Проверяем параметр goodsId
-                        if (goodsId) {
-                            const product = allProducts.find(p => p[0] === goodsId);
-                            if (product) {
-                                const [id, name, description, price, imageUrl, tags] = product;
-                                showProductPage(id, name, description, price, imageUrl);
-                                return;
-                            }
-                        }
-                        
-                        // Проверяем параметр categoryId
-                        if (categoryId) {
-                            const category = allCategories.find(c => c[0] === categoryId);
-                            if (category) {
-                                showCategory(categoryId);
-                                return;
-                            }
-                        }
-                        
-                        // По умолчанию показываем главную страницу с категориями
-                        showMainCategories();
+                const goodsId = getParameterByName('goodsId');
+                const categoryId = getParameterByName('categoryId');
+                const pageId = getParameterByName('pageId');
+                
+                // Если данные еще не загрузились, ждем
+                if (allProducts.length === 0 || allCategories.length === 0) {
+                    return;
+                }
+                
+                // Проверяем параметр pageId
+                if (pageId) {
+                    const pageData = allPages.find(p => p[0] === pageId);
+                    if (pageData) {
+                        showPage(pageId, pageData[1] || pageId);
+                        return;
                     }
+                }
+                
+                // Проверяем параметр goodsId
+                if (goodsId) {
+                    const product = allProducts.find(p => p[0] === goodsId);
+                    if (product) {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        showProductPage(id, name, description, price, imageUrl);
+                        return;
+                    }
+                }
+                
+                // Проверяем параметр categoryId
+                if (categoryId) {
+                    const category = allCategories.find(c => c[0] === categoryId);
+                    if (category) {
+                        showCategory(categoryId);
+                        return;
+                    }
+                }
+                
+                // По умолчанию показываем главную страницу с категориями
+                showMainCategories();
+            }
 
         // Функция для обновления счетчика плавающей корзины
         function updateFloatingCartCount() {
