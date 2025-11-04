@@ -1126,7 +1126,7 @@
                 <div id="page-price" class="product-price"></div>
                 
                 <div class="product-actions">
-                    <input type="number" id="page-quantity" min="1" value="1" oninput="limitQuantityInput(this)">
+                    <input type="number" id="page-quantity" min="1" max="9999" value="1" oninput="limitQuantityInput(this)">
                     <button id="page-add-button">Додати до кошику</button>
                 </div>
             </div>
@@ -2343,7 +2343,7 @@
                                     <p class="description">${description}</p>
                                     <p class="price">${price} грн</p>
                                     <div class="quantity-and-button">
-                                        <input type="number" id="quantity-${id}" min="1" value="1" oninput="limitQuantityInput(this)" onclick="event.stopPropagation()">
+                                        <input type="number" id="quantity-${id}" min="1" max="9999" value="1" oninput="limitQuantityInput(this)" onclick="event.stopPropagation()">
                                         <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
                                     </div>
                                 `;
@@ -3181,17 +3181,17 @@
 
 
         function limitQuantityInput(input) {
-            // Убираем все нечисловые символы
-            let value = input.value.replace(/[^0-9]/g, '');
+            // Преобразуем в число
+            let value = parseInt(input.value);
             
-            // Ограничиваем до 4 символов
-            if (value.length > 4) {
-                value = value.substring(0, 4);
+            // Проверяем максимальное значение (9999)
+            if (value > 9999) {
+                value = 9999;
             }
             
-            // Если значение пустое или 0, устанавливаем 1
-            if (value === '' || value === '0') {
-                value = '1';
+            // Если значение пустое, NaN или меньше 1, устанавливаем 1
+            if (isNaN(value) || value < 1) {
+                value = 1;
             }
             
             input.value = value;
