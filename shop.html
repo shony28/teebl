@@ -2984,66 +2984,79 @@
         }
 
             document.addEventListener('DOMContentLoaded', function() {
-                            loadCart();
-                            fetchProducts(); // Внутри fetchProducts вызывается loadSettings, который применит настройки
-                            initScrollTracking();
-                            
-                            window.addEventListener('popstate', function(event) {
-                                checkURLAndShowContent();
-                            });
-                            
-                            document.getElementById('search').addEventListener('input', function(e) {
-                                filterProducts();
-                            });
-                            
-                            document.addEventListener('click', function(e) {
-                                if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
-                                    closeMobileNav();
-                                }
-                            });
+                        loadCart();
+                        fetchProducts(); // Внутри fetchProducts вызывается loadSettings, который применит настройки
+                        initScrollTracking();
+                        
+                        // Проверяем URL при загрузке страницы
+                        checkURLAndShowContent();
+                        
+                        window.addEventListener('popstate', function(event) {
+                            checkURLAndShowContent();
                         });
+                        
+                        document.getElementById('search').addEventListener('input', function(e) {
+                            filterProducts();
+                        });
+                        
+                        document.addEventListener('click', function(e) {
+                            if (isMobileNavVisible && !e.target.closest('.mobile-nav') && !e.target.closest('.burger-menu')) {
+                                closeMobileNav();
+                            }
+                        });
+                    });
 
+            
             function checkURLAndShowContent() {
-                const goodsId = getParameterByName('goodsId');
-                const categoryId = getParameterByName('categoryId');
-                const pageId = getParameterByName('pageId');
-                
-                // Если данные еще не загрузились, ждем
-                if (allProducts.length === 0 || allCategories.length === 0) {
-                    return;
-                }
-                
-                // Проверяем параметр pageId
-                if (pageId) {
-                    const pageData = allPages.find(p => p[0] === pageId);
-                    if (pageData) {
-                        showPage(pageId, pageData[1] || pageId);
+                    const goodsId = getParameterByName('goodsId');
+                    const categoryId = getParameterByName('categoryId');
+                    const pageId = getParameterByName('pageId');
+                    
+                    // Если данные еще не загрузились, ждем
+                    if (allProducts.length === 0 && allCategories.length === 0 && allPages.length === 0) {
+                        // Попробуем через небольшую задержку
+                        setTimeout(checkURLAndShowContent, 100);
                         return;
                     }
-                }
-                
-                // Проверяем параметр goodsId
-                if (goodsId) {
-                    const product = allProducts.find(p => p[0] === goodsId);
-                    if (product) {
-                        const [id, name, description, price, imageUrl, tags] = product;
-                        showProductPage(id, name, description, price, imageUrl);
-                        return;
+                    
+                    // Проверяем параметр pageId
+                    if (pageId && allPages.length > 0) {
+                        const pageData = allPages.find(p => p[0] === pageId);
+                        if (pageData) {
+                            showPage(pageId, pageData[1] || pageId);
+                            return;
+                        }
+                    }
+                    
+                    // Проверяем параметр goodsId
+                    if (goodsId && allProducts.length > 0) {
+                        const product = allProducts.find(p => p[0] === goodsId);
+                        if (product) {
+                            const [id, name, description, price, imageUrl, tags] = product;
+                            showProductPage(id, name, description, price, imageUrl);
+                            return;
+                        }
+                    }
+                    
+                    // Проверяем параметр categoryId
+                    if (categoryId && allCategories.length > 0) {
+                        const category = allCategories.find(c => c[0] === categoryId);
+                        if (category) {
+                            showCategory(categoryId);
+                            return;
+                        }
+                    }
+                    
+                    // По умолчанию показываем главную страницу с категориями
+                    // ВАЖНО: скрываем страницу товара если она открыта
+                    document.getElementById('product-page').classList.remove('active');
+                    document.getElementById('products').classList.remove('hidden');
+                    
+                    if (allCategories.length > 0 || allProducts.length > 0) {
+                        showMainCategories();
                     }
                 }
-                
-                // Проверяем параметр categoryId
-                if (categoryId) {
-                    const category = allCategories.find(c => c[0] === categoryId);
-                    if (category) {
-                        showCategory(categoryId);
-                        return;
-                    }
-                }
-                
-                // По умолчанию показываем главную страницу с категориями
-                showMainCategories();
-            }
+            
 
         // Функция для обновления счетчика плавающей корзины
         function updateFloatingCartCount() {
