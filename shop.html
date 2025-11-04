@@ -135,6 +135,12 @@
             line-height: 1.4em; /* 60px / 2 строки = 30px на строку */
         }
 
+        /* Когда описание скрыто, увеличиваем высоту заголовка */
+        body:has(#product-description-style) .product h2 {
+            height: 112px; /* Увеличенная высота для 3 строк */
+            -webkit-line-clamp: 3; /* Ограничиваем до 3 строк */
+        }
+
         .products-container {
             display: flex;
             flex-wrap: wrap;
@@ -149,10 +155,6 @@
             text-overflow: ellipsis;
             margin: 5px 1px;
             color: #5f5f5f;
-        }
-
-        .product p.description.hidden {
-            display: none;
         }
 
         .product .price,
@@ -1759,99 +1761,94 @@
         
         // Применение настроек к интерфейсу
         function applySettings() {
-                // Применение текста для кнопки добавления в корзину
-                if (settingsData.buttonAddToCartName) {
-                    const addButtons = document.querySelectorAll('.quantity-and-button button, #page-add-button');
-                    addButtons.forEach(button => {
-                        button.textContent = settingsData.buttonAddToCartName;
-                    });
-                    
-                    console.log('Застосовано текст кнопки:', settingsData.buttonAddToCartName);
-                }
-                
-                // Применение telegramChatId
-                if (settingsData.telegramChatId) {
-                    TELEGRAM_CHAT_ID = settingsData.telegramChatId;
-                    console.log('Застосовано Telegram Chat ID:', settingsData.telegramChatId);
-                }
-                
-                // Применение OrdersWebAppUrl
-                if (settingsData.OrdersWebAppUrl) {
-                    ORDERS_WEB_APP_URL = settingsData.OrdersWebAppUrl;
-                    console.log('Застосовано Orders Web App URL:', settingsData.OrdersWebAppUrl);
-                }
-                
-                // Применение цветовой схемы
-                if (settingsData.styleColor) {
-                    const theme = settingsData.styleColor.toLowerCase();
-                    if (theme === 'default') {
-                        document.body.removeAttribute('data-theme');
-                    } else {
-                        document.body.setAttribute('data-theme', theme);
-                    }
-                    
-                    console.log('Застосовано цветову схему:', settingsData.styleColor);
-                }
-                
-                // Парсинг настройки freeDeliveryFromAmount
-                if (settingsData.freeDeliveryFromAmount) {
-                    freeDeliveryRules = {};
-                    const rules = settingsData.freeDeliveryFromAmount.split(';');
-                    rules.forEach(rule => {
-                        const trimmedRule = rule.trim();
-                        if (trimmedRule && trimmedRule.includes(':')) {
-                            const [deliveryName, amount] = trimmedRule.split(':').map(s => s.trim());
-                            freeDeliveryRules[deliveryName] = parseFloat(amount) || 0;
-                        }
-                    });
-                    console.log('Застосовано правила безкоштовної доставки:', freeDeliveryRules);
-                }
-                
-                // Парсим поля заказа (но не рендерим их здесь)
-                parseOrderFields();
-                
-                // Применение логотипа (изображение или текст)
-                const logoContainer = document.querySelector('.header-top__logo');
-                if (logoContainer) {
-                    if (settingsData.logoUrl) {
-                        // Если есть URL логотипа, показываем изображение
-                        logoContainer.innerHTML = `<img class="header-top__logo2" src="${settingsData.logoUrl}" alt="Logo" onerror="this.style.display='none'" />`;
-                        console.log('Застосовано URL логотипу:', settingsData.logoUrl);
-                    } else if (settingsData.logoTitle) {
-                        // Если нет URL, но есть текст, показываем текст
-                        logoContainer.innerHTML = `<span class="header-top__logo-text">${settingsData.logoTitle}</span>`;
-                        console.log('Застосовано текст логотипу:', settingsData.logoTitle);
-                    } else {
-                        // По умолчанию показываем текст или оставляем пустым
-                        logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
-                    }
-                }
-                
-                // Применение видимости описания товара
-                if (settingsData.showProductDescription === 'off') {
-                    const style = document.createElement('style');
-                    style.id = 'product-description-style';
-                    style.textContent = '.product p.description { display: none; }';
-                    
-                    // Удаляем старый стиль если есть
-                    const oldStyle = document.getElementById('product-description-style');
-                    if (oldStyle) {
-                        oldStyle.remove();
-                    }
-                    
-                    document.head.appendChild(style);
-                    console.log('Застосовано приховування опису товару');
-                } else {
-                    // Удаляем стиль если описание должно быть видимым
-                    const oldStyle = document.getElementById('product-description-style');
-                    if (oldStyle) {
-                        oldStyle.remove();
-                    }
-                }
-                
-                // Рендерим корзину после применения настроек всегда (не только если есть товары)
-                renderCart();
+    // Применение текста для кнопки добавления в корзину
+    if (settingsData.buttonAddToCartName) {
+        const addButtons = document.querySelectorAll('.quantity-and-button button, #page-add-button');
+        addButtons.forEach(button => {
+            button.textContent = settingsData.buttonAddToCartName;
+        });
+        
+        console.log('Застосовано текст кнопки:', settingsData.buttonAddToCartName);
+    }
+    
+    // Применение telegramChatId
+    if (settingsData.telegramChatId) {
+        TELEGRAM_CHAT_ID = settingsData.telegramChatId;
+        console.log('Застосовано Telegram Chat ID:', settingsData.telegramChatId);
+    }
+    
+    // Применение OrdersWebAppUrl
+    if (settingsData.OrdersWebAppUrl) {
+        ORDERS_WEB_APP_URL = settingsData.OrdersWebAppUrl;
+        console.log('Застосовано Orders Web App URL:', settingsData.OrdersWebAppUrl);
+    }
+    
+    // Применение цветовой схемы
+    if (settingsData.styleColor) {
+        const theme = settingsData.styleColor.toLowerCase();
+        if (theme === 'default') {
+            document.body.removeAttribute('data-theme');
+        } else {
+            document.body.setAttribute('data-theme', theme);
+        }
+        
+        console.log('Застосовано цветову схему:', settingsData.styleColor);
+    }
+    
+    // Парсинг настройки freeDeliveryFromAmount
+    if (settingsData.freeDeliveryFromAmount) {
+        freeDeliveryRules = {};
+        const rules = settingsData.freeDeliveryFromAmount.split(';');
+        rules.forEach(rule => {
+            const trimmedRule = rule.trim();
+            if (trimmedRule && trimmedRule.includes(':')) {
+                const [deliveryName, amount] = trimmedRule.split(':').map(s => s.trim());
+                freeDeliveryRules[deliveryName] = parseFloat(amount) || 0;
             }
+        });
+        console.log('Застосовано правила безкоштовної доставки:', freeDeliveryRules);
+    }
+    
+    // Парсим поля заказа (но не рендерим их здесь)
+    parseOrderFields();
+    
+    // Применение логотипа (изображение или текст)
+    const logoContainer = document.querySelector('.header-top__logo');
+    if (logoContainer) {
+        if (settingsData.logoUrl) {
+            // Если есть URL логотипа, показываем изображение
+            logoContainer.innerHTML = `<img class="header-top__logo2" src="${settingsData.logoUrl}" alt="Logo" onerror="this.style.display='none'" />`;
+            console.log('Застосовано URL логотипу:', settingsData.logoUrl);
+        } else if (settingsData.logoTitle) {
+            // Если нет URL, но есть текст, показываем текст
+            logoContainer.innerHTML = `<span class="header-top__logo-text">${settingsData.logoTitle}</span>`;
+            console.log('Застосовано текст логотипу:', settingsData.logoTitle);
+        } else {
+            // По умолчанию показываем текст или оставляем пустым
+            logoContainer.innerHTML = `<span class="header-top__logo-text">Logo</span>`;
+        }
+    }
+    
+    // Применение настройки видимости описания товаров
+    if (settingsData.showProductDescription === 'off') {
+        // Скрываем описания товаров
+        const style = document.createElement('style');
+        style.id = 'product-description-style';
+        style.textContent = '.product p.description { display: none !important; }';
+        document.head.appendChild(style);
+        console.log('Описание товаров скрыто');
+    } else {
+        // Удаляем стиль, если он был добавлен ранее
+        const existingStyle = document.getElementById('product-description-style');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        console.log('Описание товаров отображается');
+    }
+    
+    // Рендерим корзину после применения настроек всегда (не только если есть товары)
+    renderCart();
+}
         
 
         function parseOrderFields() {
