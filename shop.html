@@ -2153,6 +2153,15 @@
         // Показать главные категории (без родительских) и товары без категории
         function showMainCategories() {
             currentCategoryId = null;
+            
+            // Обновляем URL для главной страницы
+            const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+            let newPath = '/';
+            if (!SPREADSHEET_ID && spreadsheetId) {
+                newPath += encodeURIComponent(spreadsheetId);
+            }
+            window.history.pushState({}, '', newPath);
+            
             const productsContainer = document.getElementById('products');
             productsContainer.innerHTML = '';
             
@@ -2180,20 +2189,26 @@
         }
 
         // Показать категорию (подкатегории и товары)
-        function showCategory(categoryId) {
-            currentCategoryId = categoryId;
-            updateURL({categoryId: categoryId});
-            
-            // Найти подкатегории данной категории
-            const subcategories = allCategories.filter(category => category[2] === categoryId);
-            
-            // Найти товары данной категории
-            const categoryProducts = allProducts.filter(product => product[5] === categoryId);
-            
-            renderCategoryPage(categoryId, subcategories, categoryProducts);
-            document.getElementById('products').classList.remove('hidden');
-            document.getElementById('product-page').classList.remove('active');
-        }
+            function showCategory(categoryId) {
+                currentCategoryId = categoryId;
+                
+                // Обновляем URL только если мы не находимся в процессе обработки popstate
+                // Проверяем текущий URL, чтобы не создавать дубликаты в истории
+                const currentCategoryParam = getParameterByName('categoryId');
+                if (currentCategoryParam !== categoryId) {
+                    updateURL({categoryId: categoryId});
+                }
+                
+                // Найти подкатегории данной категории
+                const subcategories = allCategories.filter(category => category[2] === categoryId);
+                
+                // Найти товары данной категории
+                const categoryProducts = allProducts.filter(product => product[5] === categoryId);
+                
+                renderCategoryPage(categoryId, subcategories, categoryProducts);
+                document.getElementById('products').classList.remove('hidden');
+                document.getElementById('product-page').classList.remove('active');
+            }
 
         // Отрендерить страницу категории
         function renderCategoryPage(categoryId, subcategories, products) {
@@ -3056,7 +3071,7 @@
                         showMainCategories();
                     }
                 }
-            
+
 
         // Функция для обновления счетчика плавающей корзины
         function updateFloatingCartCount() {
