@@ -1126,7 +1126,7 @@
                 <div id="page-price" class="product-price"></div>
                 
                 <div class="product-actions">
-                    <input type="number" id="page-quantity" min="1" max="9999" value="1" oninput="limitQuantityInput(this)">
+                    <input type="number" id="page-quantity" min="1" value="1">
                     <button id="page-add-button">Додати до кошику</button>
                 </div>
             </div>
@@ -2310,49 +2310,47 @@
                 targetContainer.appendChild(productsContainer);
             }
 
+            function renderProducts(products, container = null) {
+                if (!products || !Array.isArray(products)) {
+                    console.error("Invalid products array:", products);
+                    return;
+                }
 
-                function renderProducts(products, container = null) {
-                            if (!products || !Array.isArray(products)) {
-                                console.error("Invalid products array:", products);
-                                return;
-                            }
-
-                            const targetContainer = container || document.getElementById('products');
-                            
-                            if (!container) {
-                                targetContainer.innerHTML = '';
-                            }
-                            
-                            // Создаем контейнер для центрирования
-                            const productsContainer = document.createElement('div');
-                            productsContainer.className = 'products-container';
-                            
-                            products.forEach(product => {
-                                const [id, name, description, price, imageUrl, tags] = product;
-                                const productElement = document.createElement('div');
-                                productElement.className = 'product';
-                                productElement.style.cursor = 'pointer';
-                                productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
-                                
-                                // Получаем текст кнопки из настроек или используем значение по умолчанию
-                                const buttonText = settingsData.buttonAddToCartName || 'Додати';
-                                
-                                productElement.innerHTML = `
-                                    <img src="${imageUrl}" alt="${name}" loading="lazy">
-                                    <h2>${name}</h2>
-                                    <p class="description">${description}</p>
-                                    <p class="price">${price} грн</p>
-                                    <div class="quantity-and-button">
-                                        <input type="number" id="quantity-${id}" min="1" max="9999" value="1" oninput="limitQuantityInput(this)" onclick="event.stopPropagation()">
-                                        <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
-                                    </div>
-                                `;
-                                productsContainer.appendChild(productElement);
-                            });
-                            
-                            targetContainer.appendChild(productsContainer);
-                        }
-
+                const targetContainer = container || document.getElementById('products');
+                
+                if (!container) {
+                    targetContainer.innerHTML = '';
+                }
+                
+                // Создаем контейнер для центрирования
+                const productsContainer = document.createElement('div');
+                productsContainer.className = 'products-container';
+                
+                products.forEach(product => {
+                    const [id, name, description, price, imageUrl, tags] = product;
+                    const productElement = document.createElement('div');
+                    productElement.className = 'product';
+                    productElement.style.cursor = 'pointer';
+                    productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
+                    
+                    // Получаем текст кнопки из настроек или используем значение по умолчанию
+                    const buttonText = settingsData.buttonAddToCartName || 'Додати';
+                    
+                    productElement.innerHTML = `
+                        <img src="${imageUrl}" alt="${name}" loading="lazy">
+                        <h2>${name}</h2>
+                        <p class="description">${description}</p>
+                        <p class="price">${price} грн</p>
+                        <div class="quantity-and-button">
+                            <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
+                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
+                        </div>
+                    `;
+                    productsContainer.appendChild(productElement);
+                });
+                
+                targetContainer.appendChild(productsContainer);
+            }
 
             function goToHome() {
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
@@ -3177,24 +3175,6 @@
                     input.setSelectionRange(3, 3);
                 }, 0);
             }
-        }
-
-
-        function limitQuantityInput(input) {
-            // Преобразуем в число
-            let value = parseInt(input.value);
-            
-            // Проверяем максимальное значение (9999)
-            if (value > 9999) {
-                value = 9999;
-            }
-            
-            // Если значение пустое, NaN или меньше 1, устанавливаем 1
-            if (isNaN(value) || value < 1) {
-                value = 1;
-            }
-            
-            input.value = value;
         }
 
     </script>
