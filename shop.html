@@ -1760,7 +1760,7 @@
         
         
         // Применение настроек к интерфейсу
-        function applySettings() {
+       function applySettings() {
     // Применение текста для кнопки добавления в корзину
     if (settingsData.buttonAddToCartName) {
         const addButtons = document.querySelectorAll('.quantity-and-button button, #page-add-button');
@@ -1781,6 +1781,11 @@
     if (settingsData.OrdersWebAppUrl) {
         ORDERS_WEB_APP_URL = settingsData.OrdersWebAppUrl;
         console.log('Застосовано Orders Web App URL:', settingsData.OrdersWebAppUrl);
+    }
+    
+    // Применение sellersEmail
+    if (settingsData.sellersEmail) {
+        console.log('Застосовано Sellers Email:', settingsData.sellersEmail);
     }
     
     // Применение цветовой схемы
@@ -2893,8 +2898,11 @@
 
                     const totalWithDelivery = totalPrice + actualDeliveryCost;
 
-                    // Отправляем в Google Sheet (который теперь сам отправит в Telegram)
-                    sendToGoogleSheet(phone, otherFieldsData, deliveryInfo, orderDetails, totalWithDelivery, TELEGRAM_CHAT_ID)
+                    // Получаем sellersEmail из настроек
+                    const sellersEmail = settingsData.sellersEmail || '';
+
+                    // Отправляем в Google Sheet (который теперь сам отправит в Telegram и Email)
+                    sendToGoogleSheet(phone, otherFieldsData, deliveryInfo, orderDetails, totalWithDelivery, TELEGRAM_CHAT_ID, sellersEmail)
                         .then((ordersData) => {
                             if (ordersData.success) {
                                 // Показываем зеленый экран с сообщением
@@ -2945,67 +2953,69 @@
                         });
                 }
 
-        function sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice, telegramChatId) {
-            console.log('Отправка в Google Sheet:', {
-                phone: phone,
-                buyer: buyer,
-                delivery: delivery,
-                orderDetails: orderDetails,
-                totalPrice: totalPrice,
-                telegramChatId: telegramChatId
-            });
-            
-            return new Promise((resolve) => {
-                try {
-                    // Создаем скрытый iframe для отправки
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.name = 'orders-iframe';
-                    document.body.appendChild(iframe);
-
-                    // Создаем форму
-                    const form = document.createElement('form');
-                    form.target = 'orders-iframe';
-                    form.method = 'POST';
-                    form.action = ORDERS_WEB_APP_URL;
-
-                    // Добавляем поля
-                    const fields = {
+        function sendToGoogleSheet(phone, buyer, delivery, orderDetails, totalPrice, telegramChatId, sellersEmail) {
+                    console.log('Отправка в Google Sheet:', {
                         phone: phone,
                         buyer: buyer,
                         delivery: delivery,
                         orderDetails: orderDetails,
                         totalPrice: totalPrice,
-                        telegramChatId: telegramChatId
-                    };
-
-                    for (const [key, value] of Object.entries(fields)) {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = key;
-                        input.value = value;
-                        form.appendChild(input);
-                        console.log(`Добавлено поле: ${key} = ${value}`);
-                    }
-
-                    document.body.appendChild(form);
+                        telegramChatId: telegramChatId,
+                        sellersEmail: sellersEmail
+                    });
                     
-                    // Отправляем форму
-                    form.submit();
+                    return new Promise((resolve) => {
+                        try {
+                            // Создаем скрытый iframe для отправки
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.name = 'orders-iframe';
+                            document.body.appendChild(iframe);
 
-                    // Ждем немного и считаем успешным
-                    setTimeout(() => {
-                        document.body.removeChild(form);
-                        document.body.removeChild(iframe);
-                        resolve({ success: true });
-                    }, 1500);
+                            // Создаем форму
+                            const form = document.createElement('form');
+                            form.target = 'orders-iframe';
+                            form.method = 'POST';
+                            form.action = ORDERS_WEB_APP_URL;
 
-                } catch (error) {
-                    console.error('Помилка відправки в Google Sheet:', error);
-                    resolve({ success: false, error: error.toString() });
+                            // Добавляем поля
+                            const fields = {
+                                phone: phone,
+                                buyer: buyer,
+                                delivery: delivery,
+                                orderDetails: orderDetails,
+                                totalPrice: totalPrice,
+                                telegramChatId: telegramChatId,
+                                sellersEmail: sellersEmail
+                            };
+
+                            for (const [key, value] of Object.entries(fields)) {
+                                const input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = key;
+                                input.value = value;
+                                form.appendChild(input);
+                                console.log(`Добавлено поле: ${key} = ${value}`);
+                            }
+
+                            document.body.appendChild(form);
+                            
+                            // Отправляем форму
+                            form.submit();
+
+                            // Ждем немного и считаем успешным
+                            setTimeout(() => {
+                                document.body.removeChild(form);
+                                document.body.removeChild(iframe);
+                                resolve({ success: true });
+                            }, 1500);
+
+                        } catch (error) {
+                            console.error('Помилка відправки в Google Sheet:', error);
+                            resolve({ success: false, error: error.toString() });
+                        }
+                    });
                 }
-            });
-        }
 
         function saveCart() {
             localStorage.setItem('cart', JSON.stringify(cart));
