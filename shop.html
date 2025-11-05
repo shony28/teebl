@@ -1060,6 +1060,18 @@
             }
         }
 
+        .quantity-and-button input:disabled,
+        .quantity-and-button button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .product-actions input:disabled,
+        .product-actions button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
     </style>
 </head>
 <body>
@@ -2341,46 +2353,65 @@
             }
 
             function renderProducts(products, container = null) {
-                if (!products || !Array.isArray(products)) {
-                    console.error("Invalid products array:", products);
-                    return;
-                }
+                    if (!products || !Array.isArray(products)) {
+                        console.error("Invalid products array:", products);
+                        return;
+                    }
 
-                const targetContainer = container || document.getElementById('products');
-                
-                if (!container) {
-                    targetContainer.innerHTML = '';
+                    const targetContainer = container || document.getElementById('products');
+                    
+                    if (!container) {
+                        targetContainer.innerHTML = '';
+                    }
+                    
+                    // Создаем контейнер для центрирования
+                    const productsContainer = document.createElement('div');
+                    productsContainer.className = 'products-container';
+                    
+                    products.forEach(product => {
+                        const [id, name, description, price, imageUrl, tags] = product;
+                        const productElement = document.createElement('div');
+                        productElement.className = 'product';
+                        productElement.style.cursor = 'pointer';
+                        productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
+                        
+                        // Проверяем наличие цены
+                        const numPrice = parseFloat(price);
+                        const isAvailable = numPrice && numPrice > 0;
+                        
+                        // Получаем текст кнопки из настроек или используем значение по умолчанию
+                        const buttonText = settingsData.buttonAddToCartName || 'Додати';
+                        
+                        // Формируем HTML в зависимости от наличия товара
+                        if (isAvailable) {
+                            productElement.innerHTML = `
+                                <img src="${imageUrl}" alt="${name}" loading="lazy">
+                                <h2>${name}</h2>
+                                <p class="description">${description}</p>
+                                <p class="price">${price} грн</p>
+                                <div class="quantity-and-button">
+                                    <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
+                                    <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
+                                </div>
+                            `;
+                        } else {
+                            productElement.innerHTML = `
+                                <img src="${imageUrl}" alt="${name}" loading="lazy">
+                                <h2>${name}</h2>
+                                <p class="description">${description}</p>
+                                <p class="price" style="color: #999;">Немає в наявності</p>
+                                <div class="quantity-and-button">
+                                    <input type="number" id="quantity-${id}" min="1" value="1" disabled onclick="event.stopPropagation()">
+                                    <button disabled onclick="event.stopPropagation()">${buttonText}</button>
+                                </div>
+                            `;
+                        }
+                        
+                        productsContainer.appendChild(productElement);
+                    });
+                    
+                    targetContainer.appendChild(productsContainer);
                 }
-                
-                // Создаем контейнер для центрирования
-                const productsContainer = document.createElement('div');
-                productsContainer.className = 'products-container';
-                
-                products.forEach(product => {
-                    const [id, name, description, price, imageUrl, tags] = product;
-                    const productElement = document.createElement('div');
-                    productElement.className = 'product';
-                    productElement.style.cursor = 'pointer';
-                    productElement.onclick = () => showProductPage(id, name, description, price, imageUrl);
-                    
-                    // Получаем текст кнопки из настроек или используем значение по умолчанию
-                    const buttonText = settingsData.buttonAddToCartName || 'Додати';
-                    
-                    productElement.innerHTML = `
-                        <img src="${imageUrl}" alt="${name}" loading="lazy">
-                        <h2>${name}</h2>
-                        <p class="description">${description}</p>
-                        <p class="price">${price} грн</p>
-                        <div class="quantity-and-button">
-                            <input type="number" id="quantity-${id}" min="1" value="1" onclick="event.stopPropagation()">
-                            <button onclick="event.stopPropagation(); addToCart('${id}', '${name}', '${price}')">${buttonText}</button>
-                        </div>
-                    `;
-                    productsContainer.appendChild(productElement);
-                });
-                
-                targetContainer.appendChild(productsContainer);
-            }
 
             function goToHome() {
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
@@ -2410,39 +2441,59 @@
             }
 
                 // функции для работы со страницей товара
-            function showProductPage(id, name, description, price, imageUrl) {
-                // Обновляем URL с параметром
-                updateURL({goodsId: id});
-                
-                // Заполняем данные страницы товара
-                document.getElementById('page-image').src = imageUrl;
-                document.getElementById('page-image').alt = name;
-                document.getElementById('page-title').textContent = name;
-                document.getElementById('page-article').textContent = `Артикул: ${id}`;
-                document.getElementById('page-description').textContent = description;
-                document.getElementById('page-price').textContent = `${price} грн`;
-                
-                // Устанавливаем обработчик для кнопки добавления и применяем настройки
-                const addButton = document.getElementById('page-add-button');
-                addButton.onclick = () => {
-                    const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
-                    const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
-                    quantityInput.value = quantity;
-                    addToCart(id, name, price);
-                };
-                
-                // Применяем текст кнопки из настроек
-                if (settingsData.buttonAddToCartName) {
-                    addButton.textContent = settingsData.buttonAddToCartName;
+                function showProductPage(id, name, description, price, imageUrl) {
+                    // Обновляем URL с параметром
+                    updateURL({goodsId: id});
+                    
+                    // Проверяем наличие товара
+                    const numPrice = parseFloat(price);
+                    const isAvailable = numPrice && numPrice > 0;
+                    
+                    // Заполняем данные страницы товара
+                    document.getElementById('page-image').src = imageUrl;
+                    document.getElementById('page-image').alt = name;
+                    document.getElementById('page-title').textContent = name;
+                    document.getElementById('page-article').textContent = `Артикул: ${id}`;
+                    document.getElementById('page-description').textContent = description;
+                    
+                    // Устанавливаем цену или сообщение о недоступности
+                    const priceElement = document.getElementById('page-price');
+                    const quantityInput = document.getElementById('page-quantity');
+                    const addButton = document.getElementById('page-add-button');
+                    
+                    if (isAvailable) {
+                        priceElement.textContent = `${price} грн`;
+                        priceElement.style.color = '';
+                        quantityInput.disabled = false;
+                        addButton.disabled = false;
+                        
+                        // Устанавливаем обработчик для кнопки добавления
+                        addButton.onclick = () => {
+                            const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
+                            const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
+                            quantityInput.value = quantity;
+                            addToCart(id, name, price);
+                        };
+                    } else {
+                        priceElement.textContent = 'Немає в наявності';
+                        priceElement.style.color = '#999';
+                        quantityInput.disabled = true;
+                        addButton.disabled = true;
+                        addButton.onclick = null;
+                    }
+                    
+                    // Применяем текст кнопки из настроек
+                    if (settingsData.buttonAddToCartName) {
+                        addButton.textContent = settingsData.buttonAddToCartName;
+                    }
+                    
+                    // Показываем страницу товара и скрываем список товаров
+                    document.getElementById('products').classList.add('hidden');
+                    document.getElementById('product-page').classList.add('active');
+                    
+                    // Прокручиваем к началу страницы
+                    window.scrollTo(0, 0);
                 }
-                
-                // Показываем страницу товара и скрываем список товаров
-                document.getElementById('products').classList.add('hidden');
-                document.getElementById('product-page').classList.add('active');
-                
-                // Прокручиваем к началу страницы
-                window.scrollTo(0, 0);
-            }
 
 
 
