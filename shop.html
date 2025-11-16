@@ -1262,6 +1262,56 @@
         }
 
 
+        //функцию генерации JSON-LD
+        function generateProductJsonLd(product) {
+                const [id, name, description, price, imageUrl, tags] = product;
+                
+                // Проверяем наличие цены
+                const numPrice = parseFloat(price);
+                const isAvailable = numPrice && numPrice > 0;
+                
+                const jsonLd = {
+                    "@context": "https://schema.org/",
+                    "@type": "Product",
+                    "name": name,
+                    "image": imageUrl,
+                    "description": description
+                };
+                
+                // Добавляем информацию о цене только если товар доступен
+                if (isAvailable) {
+                    jsonLd.offers = {
+                        "@type": "Offer",
+                        "price": numPrice.toFixed(2),
+                        "priceCurrency": "UAH",
+                        "availability": "https://schema.org/InStock"
+                    };
+                } else {
+                    jsonLd.offers = {
+                        "@type": "Offer",
+                        "availability": "https://schema.org/OutOfStock"
+                    };
+                }
+                
+                return jsonLd;
+            }
+
+            function insertJsonLd(jsonLd) {
+                // Удаляем предыдущий JSON-LD если есть
+                const existingScript = document.getElementById('product-jsonld');
+                if (existingScript) {
+                    existingScript.remove();
+                }
+                
+                // Создаем новый script тег с JSON-LD
+                const script = document.createElement('script');
+                script.id = 'product-jsonld';
+                script.type = 'application/ld+json';
+                script.text = JSON.stringify(jsonLd);
+                document.head.appendChild(script);
+            }
+
+
         // Функция для выполнения fetch с повторными попытками
         async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
             for (let i = 0; i < retries; i++) {
@@ -2417,94 +2467,114 @@
                     }
 
             function goToHome() {
-                const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
-                
-                // Формируем URL главной страницы
-                let newPath = '/';
-                
-                // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID
-                if (!SPREADSHEET_ID && spreadsheetId) {
-                    newPath += encodeURIComponent(spreadsheetId);
+                    const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                    
+                    // Удаляем JSON-LD при переходе на главную
+                    const existingScript = document.getElementById('product-jsonld');
+                    if (existingScript) {
+                        existingScript.remove();
+                    }
+                    
+                    // Формируем URL главной страницы
+                    let newPath = '/';
+                    
+                    // Добавляем id ТОЛЬКО если он НЕ задан в SPREADSHEET_ID
+                    if (!SPREADSHEET_ID && spreadsheetId) {
+                        newPath += encodeURIComponent(spreadsheetId);
+                    }
+                    
+                    window.history.pushState({}, '', newPath);
+                    
+                    // Сбрасываем поиск если есть
+                    document.getElementById('search').value = '';
+                    toggleResetButton();
+                    
+                    // Показываем главную страницу с категориями
+                    showMainCategories();
+                    
+                    // Скрываем страницу товара если она открыта
+                    document.getElementById('product-page').classList.remove('active');
+                    
+                    // Прокручиваем к началу страницы
+                    window.scrollTo(0, 0);
                 }
-                
-                window.history.pushState({}, '', newPath);
-                
-                // Сбрасываем поиск если есть
-                document.getElementById('search').value = '';
-                toggleResetButton();
-                
-                // Показываем главную страницу с категориями
-                showMainCategories();
-                
-                // Скрываем страницу товара если она открыта
-                document.getElementById('product-page').classList.remove('active');
-                
-                // Прокручиваем к началу страницы
-                window.scrollTo(0, 0);
-            }
-
                 // функции для работы со страницей товара
                 function showProductPage(id, name, description, price, imageUrl) {
-                        // Обновляем URL с параметром
-                        updateURL({goodsId: id});
-                        
-                        // Проверяем наличие товара
-                        const numPrice = parseFloat(price);
-                        const isAvailable = numPrice && numPrice > 0;
-                        
-                        // Заполняем данные страницы товара
-                        document.getElementById('page-image').src = imageUrl;
-                        document.getElementById('page-image').alt = name;
-                        document.getElementById('page-title').textContent = name;
-                        document.getElementById('page-article').textContent = `Артикул: ${id}`;
-                        
-                        // ИЗМЕНЕНО: используем innerHTML вместо textContent для поддержки HTML-разметки
-                        document.getElementById('page-description').innerHTML = description;
-                        
-                        // Устанавливаем цену или сообщение о недоступности
-                        const priceElement = document.getElementById('page-price');
-                        const quantityInput = document.getElementById('page-quantity');
-                        const addButton = document.getElementById('page-add-button');
-                        
-                        if (isAvailable) {
-                            priceElement.textContent = `${price} грн`;
-                            priceElement.style.color = '';
-                            quantityInput.disabled = false;
-                            addButton.disabled = false;
+                            // Обновляем URL с параметром
+                            updateURL({goodsId: id});
                             
-                            // Устанавливаем обработчик для кнопки добавления
-                            addButton.onclick = () => {
-                                const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
-                                const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
-                                quantityInput.value = quantity;
-                                addToCart(id, name, price);
-                            };
-                        } else {
-                            priceElement.textContent = 'Немає в наявності';
-                            priceElement.style.color = '#999';
-                            quantityInput.disabled = true;
-                            addButton.disabled = true;
-                            addButton.onclick = null;
+                            // Находим полные данные продукта
+                            const product = allProducts.find(p => p[0] === id);
+                            
+                            // Генерируем и вставляем JSON-LD
+                            if (product) {
+                                const jsonLd = generateProductJsonLd(product);
+                                insertJsonLd(jsonLd);
+                            }
+                            
+                            // Проверяем наличие товара
+                            const numPrice = parseFloat(price);
+                            const isAvailable = numPrice && numPrice > 0;
+                            
+                            // Заполняем данные страницы товара
+                            document.getElementById('page-image').src = imageUrl;
+                            document.getElementById('page-image').alt = name;
+                            document.getElementById('page-title').textContent = name;
+                            document.getElementById('page-article').textContent = `Артикул: ${id}`;
+                            
+                            // ИЗМЕНЕНО: используем innerHTML вместо textContent для поддержки HTML-разметки
+                            document.getElementById('page-description').innerHTML = description;
+                            
+                            // Устанавливаем цену или сообщение о недоступности
+                            const priceElement = document.getElementById('page-price');
+                            const quantityInput = document.getElementById('page-quantity');
+                            const addButton = document.getElementById('page-add-button');
+                            
+                            if (isAvailable) {
+                                priceElement.textContent = `${price} грн`;
+                                priceElement.style.color = '';
+                                quantityInput.disabled = false;
+                                addButton.disabled = false;
+                                
+                                // Устанавливаем обработчик для кнопки добавления
+                                addButton.onclick = () => {
+                                    const quantity = parseInt(document.getElementById('page-quantity').value) || 1;
+                                    const quantityInput = document.getElementById(`quantity-${id}`) || {value: quantity};
+                                    quantityInput.value = quantity;
+                                    addToCart(id, name, price);
+                                };
+                            } else {
+                                priceElement.textContent = 'Немає в наявності';
+                                priceElement.style.color = '#999';
+                                quantityInput.disabled = true;
+                                addButton.disabled = true;
+                                addButton.onclick = null;
+                            }
+                            
+                            // Применяем текст кнопки из настроек
+                            if (settingsData.buttonAddToCartName) {
+                                addButton.textContent = settingsData.buttonAddToCartName;
+                            }
+                            
+                            // Показываем страницу товара и скрываем список товаров
+                            document.getElementById('products').classList.add('hidden');
+                            document.getElementById('product-page').classList.add('active');
+                            
+                            // Прокручиваем к началу страницы
+                            window.scrollTo(0, 0);
                         }
-                        
-                        // Применяем текст кнопки из настроек
-                        if (settingsData.buttonAddToCartName) {
-                            addButton.textContent = settingsData.buttonAddToCartName;
-                        }
-                        
-                        // Показываем страницу товара и скрываем список товаров
-                        document.getElementById('products').classList.add('hidden');
-                        document.getElementById('product-page').classList.add('active');
-                        
-                        // Прокручиваем к началу страницы
-                        window.scrollTo(0, 0);
-                    }
 
 
 
 
-            function showProductsList() {
+        function showProductsList() {
                 const spreadsheetId = SPREADSHEET_ID || getParameterByName('id');
+                
+                // Удаляем JSON-LD при возврате к списку
+                const existingScript = document.getElementById('product-jsonld');
+                if (existingScript) {
+                    existingScript.remove();
+                }
                 
                 // Формируем URL главной страницы
                 let newPath = '/';
@@ -3271,6 +3341,7 @@
     </script>
 </body>
 </html>
+
 
 
 
